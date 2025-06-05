@@ -1,10 +1,16 @@
 """Ejecuta una búsqueda de parámetros para estrategias."""
 
-import importlib
-import itertools
+import sys
 from pathlib import Path
 
-import pandas as pd
+sys.path.append(str(Path(__file__).resolve().parent.parent))  # noqa: E402
+
+import importlib  # noqa: E402
+import itertools  # noqa: E402
+
+import pandas as pd  # noqa: E402
+
+from tools.ensure_data_and_run import ensure_data  # noqa: E402
 
 EXCEL_FILE = Path("bitcoin_prices.xlsx")
 
@@ -47,11 +53,15 @@ def run_backtest(module_name: str, **params) -> tuple[float, float]:
 
     equity_series = pd.Series(equity_curve)
     returns = equity_series.pct_change().dropna()
-    sharpe = (returns.mean() / returns.std()) * (252**0.5) if not returns.empty else 0.0
+    annual_factor = 252**0.5
+    # fmt: off
+    sharpe = (returns.mean() / returns.std()) * annual_factor if not returns.empty else 0.0  # noqa: E501
+    # fmt: on
     return capital, sharpe
 
 
 def main():
+    ensure_data()
     grid = {
         "strategies.rsi_mean_reversion": {
             "rsi_period": [14, 21],
