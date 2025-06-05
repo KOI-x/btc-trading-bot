@@ -37,8 +37,9 @@ def verificar_archivo_excel(path: Path) -> pd.DataFrame | None:
     obligatorias = {"Fecha", "Precio USD"}
     if not obligatorias.issubset(columnas):
         faltantes = obligatorias - columnas
+        faltantes_str = ", ".join(faltantes)
         print(
-            f"[ERROR] El archivo no contiene las columnas obligatorias: {', '.join(faltantes)}"
+            f"[ERROR] El archivo no contiene las columnas obligatorias: {faltantes_str}"
         )
         return None
 
