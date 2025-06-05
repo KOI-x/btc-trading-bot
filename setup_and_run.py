@@ -22,6 +22,7 @@ def main():
 
     run([str(python), '-m', 'pip', 'install', '--upgrade', 'pip'])
     run([str(python), '-m', 'pip', 'install', '-r', 'requirements.txt'])
+    run([str(python), '-m', 'pip', 'install', '-e', '.'])
 
     run([str(python), 'data_ingestion/historic_fetcher.py'])
 
