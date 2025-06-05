@@ -4,7 +4,7 @@ Sistema modular en Python para trading automático de Bitcoin. Ingesta de datos,
 
 ## Descripción del proyecto
 
-Este bot descarga precios históricos de Bitcoin, calcula variaciones y aplica una estrategia combinada de medias móviles exponenciales (EMA) con el modelo Stock-to-Flow (S2F) para mostrar resultados de backtesting.
+Este bot descarga precios históricos de Bitcoin, calcula variaciones y aplica estrategias de trading configurables. Incluye la estrategia combinada de medias móviles exponenciales (EMA) con el modelo Stock-to-Flow (S2F) y otras variantes como mean-reversion con RSI o breakout con ATR.
 
 ## Instalación
 
@@ -55,4 +55,9 @@ Corre las pruebas y el backtest antes de abrir un pull-request:
 
 ```bash
 python backtests/ema_s2f_backtest.py
+```
+Para experimentar con distintas estrategias y parámetros puedes ejecutar el grid search:
+
+```bash
+python backtests/run_grid.py
 ```
