@@ -48,7 +48,7 @@ isort .
 Ejecuta Flake8 para asegurar que no haya errores de estilo:
 
 ```bash
-flake8
+flake8 --max-line-length=88 --extend-ignore=E203,W503
 ```
 
 Corre las pruebas y el backtest antes de abrir un pull-request:
