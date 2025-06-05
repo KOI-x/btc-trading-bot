@@ -1,4 +1,5 @@
 import argparse
+from math import sqrt
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -61,10 +62,24 @@ def backtest(save_path: str | None = None):
     drawdowns = (equity_series - running_max) / running_max
     max_drawdown = drawdowns.min() * 100
 
+    # CAGR y Sharpe Ratio
+    days = (
+        pd.to_datetime(df["Fecha"].iloc[-1]) - pd.to_datetime(df["Fecha"].iloc[0])
+    ).days
+    if days == 0:
+        cagr = 0.0
+    else:
+        cagr = (capital / 10000.0) ** (365 / days) - 1
+
+    returns = equity_series.pct_change().dropna()
+    sharpe = (returns.mean() / returns.std() * sqrt(365)) if not returns.empty else 0.0
+
     print(f"Valor final de la cuenta: ${capital:.2f}")
     print(f"Cantidad de operaciones: {trades}")
     print(f"Win-rate: {win_rate:.2f}%")
     print(f"Max drawdown: {max_drawdown:.2f}%")
+    print(f"CAGR: {cagr * 100:.2f}%")
+    print(f"Sharpe Ratio: {sharpe:.2f}")
 
     plt.figure()
     plt.plot(df["Fecha"], equity_curve, label="Equity Curve")
