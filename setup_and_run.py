@@ -19,7 +19,7 @@ def run(cmd):
 
 
 def import_external_strategy(url: str) -> None:
-    """Download and backtest a Freqtrade strategy from GitHub or Gist."""
+    """Download and backtest a Freqtrade strategy from GitHub or Gist URL."""
     strategies_dir = Path("strategies")
     strategies_dir.mkdir(exist_ok=True)
 
