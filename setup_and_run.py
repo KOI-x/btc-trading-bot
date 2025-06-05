@@ -89,9 +89,7 @@ def import_external_strategy(url: str) -> None:
     ]
 
     try:
-        output = subprocess.check_output(
-            cmd, text=True, stderr=subprocess.STDOUT
-        )
+        output = subprocess.check_output(cmd, text=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exc:
         print(f"[ERROR] Backtesting fallo: {exc.output}")
         return
