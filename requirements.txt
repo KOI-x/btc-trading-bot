@@ -3,3 +3,6 @@ openpyxl
 schedule
 pandas
 matplotlib
+black
+isort
+flake8

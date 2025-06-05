@@ -1,6 +1,6 @@
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -13,21 +13,25 @@ def run(cmd):
 
 
 def main():
-    venv_dir = Path('.venv')
+    venv_dir = Path(".venv")
     if not venv_dir.exists():
-        print('Creating virtual environment...')
-        subprocess.check_call([sys.executable, '-m', 'venv', str(venv_dir)])
+        print("Creating virtual environment...")
+        subprocess.check_call([sys.executable, "-m", "venv", str(venv_dir)])
 
-    python = venv_dir / ('Scripts' if os.name == 'nt' else 'bin') / ('python.exe' if os.name == 'nt' else 'python')
+    python = (
+        venv_dir
+        / ("Scripts" if os.name == "nt" else "bin")
+        / ("python.exe" if os.name == "nt" else "python")
+    )
 
-    run([str(python), '-m', 'pip', 'install', '--upgrade', 'pip'])
-    run([str(python), '-m', 'pip', 'install', '-r', 'requirements.txt'])
-    run([str(python), '-m', 'pip', 'install', '-e', '.'])
+    run([str(python), "-m", "pip", "install", "--upgrade", "pip"])
+    run([str(python), "-m", "pip", "install", "-r", "requirements.txt"])
+    run([str(python), "-m", "pip", "install", "-e", "."])
 
-    run([str(python), 'data_ingestion/historic_fetcher.py'])
+    run([str(python), "data_ingestion/historic_fetcher.py"])
 
-    run([str(python), 'backtests/ema_s2f_backtest.py', '--save', 'equity_curve.png'])
+    run([str(python), "backtests/ema_s2f_backtest.py", "--save", "equity_curve.png"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

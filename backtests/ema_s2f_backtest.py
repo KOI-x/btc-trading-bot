@@ -1,8 +1,8 @@
+import argparse
 from pathlib import Path
 
-import pandas as pd
 import matplotlib.pyplot as plt
-import argparse
+import pandas as pd
 
 from strategies.ema_s2f import evaluar_estrategia
 
@@ -81,6 +81,11 @@ def backtest(save_path: str | None = None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--save", dest="save", help="Ruta para guardar la curva de capital", required=False)
+    parser.add_argument(
+        "--save",
+        dest="save",
+        help="Ruta para guardar la curva de capital",
+        required=False,
+    )
     args = parser.parse_args()
     backtest(args.save)

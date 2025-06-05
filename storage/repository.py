@@ -1,7 +1,9 @@
 from pathlib import Path
+
 import openpyxl
 
 EXCEL_FILE = Path("bitcoin_prices.xlsx")
+
 
 def inicializar_bd():
     """Crea el archivo de base de datos si no existe."""

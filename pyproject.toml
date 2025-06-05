@@ -1,3 +1,24 @@
 [project]
 name = "btc_trading_bot"
 version = "0.1.0"
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+exclude = '''
+/(\n    \.git\n  | \.venv\n  | build\n  | dist\n)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]

@@ -1,8 +1,9 @@
-import requests
 from datetime import datetime, timezone
 
-from storage.repository import inicializar_bd, guardar_registro, EXCEL_FILE
-from analytics.s2f import obtener_valor_s2f, calcular_desviacion
+import requests
+
+from analytics.s2f import calcular_desviacion, obtener_valor_s2f
+from storage.repository import EXCEL_FILE, guardar_registro, inicializar_bd
 
 
 def fetch_historical_prices():
