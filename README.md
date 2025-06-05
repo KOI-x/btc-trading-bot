@@ -61,3 +61,8 @@ Para experimentar con distintas estrategias y parámetros puedes ejecutar el gri
 ```bash
 python backtests/run_grid.py
 ```
+
+## Ejemplo de backtest con verificación de datos
+```bash
+python tools/ensure_data_and_run.py backtests.ema_s2f_backtest --save equity.png
+```
