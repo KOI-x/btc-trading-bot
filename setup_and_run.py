@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 import subprocess
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import pandas as pd  # noqa: F401
 
 # --------------------------- Utilidades ------------------------------------
 
@@ -14,9 +20,8 @@ def ensure_package(pkg: str) -> None:
         subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
 
 
-def verificar_archivo_excel(path: Path) -> "pd.DataFrame | None":
+def verificar_archivo_excel(path: Path) -> pd.DataFrame | None:
     """Comprueba existencia y columnas del Excel."""
-    import pandas as pd  # se asegura mediante ensure_package
 
     if not path.exists():
         print(f"[ERROR] No se encontró el archivo {path.name}.")
@@ -74,10 +79,10 @@ def agregar_sys_path(root: Path) -> None:
 
 
 def ejecutar_backtest(df, rsi_period: int, overbought: int, oversold: int) -> None:
+    """Ejecuta el backtest RSI con métricas de rendimiento."""
     from math import sqrt
 
     import matplotlib.pyplot as plt
-    import pandas as pd
 
     from strategies.rsi_mean_reversion import evaluar_estrategia
 
@@ -153,13 +158,12 @@ def ejecutar_backtest(df, rsi_period: int, overbought: int, oversold: int) -> No
 
 
 def main() -> None:
+    """Configura el entorno y ejecuta el backtest predeterminado."""
     root = Path(__file__).resolve().parent
 
     # Verificar/instalar paquetes
     for pkg in ["pandas", "matplotlib", "openpyxl"]:
         ensure_package(pkg)
-
-    import pandas as pd  # noqa: E402
 
     # Verificar archivo Excel
     excel_file = root / "bitcoin_prices.xlsx"
