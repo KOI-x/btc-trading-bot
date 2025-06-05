@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from tools.ensure_data_and_run import ensure_data
+
 EXCEL_FILE = Path("bitcoin_prices.xlsx")
 
 
@@ -52,6 +54,7 @@ def run_backtest(module_name: str, **params) -> tuple[float, float]:
 
 
 def main():
+    ensure_data()
     grid = {
         "strategies.rsi_mean_reversion": {
             "rsi_period": [14, 21],
