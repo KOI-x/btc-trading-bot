@@ -1,12 +1,12 @@
-import schedule
 import time
 from datetime import datetime
 
 import pandas as pd
+import schedule
 
+from analytics.s2f import calcular_desviacion, obtener_valor_s2f
 from data_ingestion.fetcher import obtener_precio_bitcoin
-from storage.repository import inicializar_bd, guardar_registro, EXCEL_FILE
-from analytics.s2f import obtener_valor_s2f, calcular_desviacion
+from storage.repository import EXCEL_FILE, guardar_registro, inicializar_bd
 from strategies.ema_s2f import evaluar_estrategia
 
 
@@ -35,7 +35,8 @@ def job():
             senal = "HOLD"
 
         print(
-            f"[{ahora}] BTC: ${precio} ({variacion:+.2f}%, S2F {desviacion:+.2f}%) -> {senal}"
+            f"[{ahora}] BTC: ${precio} "
+            f"({variacion:+.2f}%, S2F {desviacion:+.2f}%) -> {senal}"
         )
     except Exception as e:
         print(f"[ADVERTENCIA] Error en la tarea programada: {e}")

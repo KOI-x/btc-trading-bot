@@ -29,3 +29,30 @@ Las dependencias necesarias se detallan en [requirements.txt](requirements.txt):
 - matplotlib
 - openpyxl
 - schedule
+
+## Contribuir
+
+1. Instala las dependencias de desarrollo:
+
+```bash
+pip install -r requirements.txt
+```
+
+Formatea tu código con Black e isort:
+
+```bash
+black .
+isort .
+```
+
+Ejecuta Flake8 para asegurar que no haya errores de estilo:
+
+```bash
+flake8
+```
+
+Corre las pruebas y el backtest antes de abrir un pull-request:
+
+```bash
+python backtests/ema_s2f_backtest.py
+```
