@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, List
 
 from sqlalchemy.orm import sessionmaker
 
@@ -12,10 +12,34 @@ def comparar_vs_hold(
     coin_id: str,
     fecha_inicio: str,
     fecha_fin: str,
-    resultado_backtest: dict[str, Any],
+    equity_curve: List[float],
     db_url: str = "sqlite:///prices.sqlite",
 ) -> dict[str, Any]:
-    """Compara el retorno de una estrategia con un enfoque buy & hold."""
+    """Compara el rendimiento de una estrategia con la estrategia de buy & hold.
+
+    Parameters
+    ----------
+    coin_id : str
+        Identificador de la moneda a consultar.
+    fecha_inicio : str
+        Fecha inicial en formato ``YYYY-MM-DD``.
+    fecha_fin : str
+        Fecha final en formato ``YYYY-MM-DD``.
+    equity_curve : list[float]
+        Valores de capital simulados por la estrategia.
+    db_url : str, optional
+        URL de la base de datos SQLite.
+
+    Returns
+    -------
+    dict
+        Diccionario con ``retorno_hold``, ``retorno_estrategia`` y ``comparacion``.
+
+    Raises
+    ------
+    ValueError
+        Si faltan precios en la base de datos o ``equity_curve`` está vacía.
+    """
 
     start = datetime.fromisoformat(fecha_inicio).date()
     end = datetime.fromisoformat(fecha_fin).date()
@@ -33,10 +57,9 @@ def comparar_vs_hold(
 
     retorno_hold = end_price / start_price - 1
 
-    curva = resultado_backtest.get("equity_curve")
-    if not curva:
-        raise ValueError("resultado_backtest debe incluir 'equity_curve'")
-    retorno_estrategia = curva[-1] / curva[0] - 1
+    if not equity_curve:
+        raise ValueError("equity_curve no puede estar vacía")
+    retorno_estrategia = equity_curve[-1] / equity_curve[0] - 1
 
     if abs(retorno_estrategia - retorno_hold) < 1e-9:
         comparacion = "igual"
@@ -46,7 +69,7 @@ def comparar_vs_hold(
         comparacion = "peor"
 
     return {
-        "estrategia_vs_hold": comparacion,
-        "retorno_estrategia": retorno_estrategia,
         "retorno_hold": retorno_hold,
+        "retorno_estrategia": retorno_estrategia,
+        "comparacion": comparacion,
     }
