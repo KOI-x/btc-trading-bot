@@ -1,36 +1,73 @@
-import os
-import subprocess
-import sys
+from __future__ import annotations
+
+import csv
+from datetime import datetime
 from pathlib import Path
 
+import uvicorn
+from dotenv import load_dotenv
 
-def run(cmd):
-    """Run a command and stream its output."""
-    print(f"Running: {' '.join(cmd)}")
-    proc = subprocess.run(cmd, text=True)
-    if proc.returncode != 0:
-        sys.exit(proc.returncode)
+ROOT_DIR = Path(__file__).resolve().parent
 
 
-def main():
-    venv_dir = Path(".venv")
-    if not venv_dir.exists():
-        print("Creating virtual environment...")
-        subprocess.check_call([sys.executable, "-m", "venv", str(venv_dir)])
+def _sqlite_path(url: str) -> Path | None:
+    """Return Path for sqlite file or ``None`` for other schemes."""
+    prefix = "sqlite:///"
+    if url.startswith(prefix) and url != "sqlite:///:memory:":
+        db_path = Path(url[len(prefix) :])
+        if not db_path.is_absolute():
+            db_path = ROOT_DIR / db_path
+        return db_path
+    return None
 
-    python = (
-        venv_dir
-        / ("Scripts" if os.name == "nt" else "bin")
-        / ("python.exe" if os.name == "nt" else "python")
-    )
 
-    run([str(python), "-m", "pip", "install", "--upgrade", "pip"])
-    run([str(python), "-m", "pip", "install", "-r", "requirements.txt"])
-    run([str(python), "-m", "pip", "install", "-e", "."])
+def seed_prices() -> None:
+    """Load initial price data from ``fixtures/seed_prices.csv`` if present."""
+    from api.database import SessionLocal
+    from api.models import Price
 
-    run([str(python), "data_ingestion/historic_fetcher.py"])
+    csv_path = ROOT_DIR / "fixtures" / "seed_prices.csv"
+    if not csv_path.exists():
+        return
 
-    run([str(python), "backtests/ema_s2f_backtest.py", "--save", "equity_curve.png"])
+    print(f"\U0001f331 Cargando datos desde {csv_path} ...")
+    with SessionLocal() as session, open(csv_path, newline="") as fh:
+        reader = csv.DictReader(fh)
+        for row in reader:
+            session.add(
+                Price(
+                    coin_id=row["coin_id"],
+                    date=datetime.fromisoformat(row["date"]).date(),
+                    price_usd=float(row["price_usd"]),
+                )
+            )
+        session.commit()
+    print("✅ Datos iniciales cargados")
+
+
+def ensure_database() -> None:
+    """Create database file and tables if needed."""
+    from api.database import Base, engine
+    from config import DATABASE_URL
+
+    db_path = _sqlite_path(DATABASE_URL)
+    first_time = False
+    if db_path and not db_path.exists():
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        first_time = True
+
+    Base.metadata.create_all(bind=engine)
+
+    if first_time:
+        print("✅ DB creada")
+        seed_prices()
+
+
+def main() -> None:
+    load_dotenv()
+    ensure_database()
+    print("🚀 Servidor corriendo en http://localhost:8000")
+    uvicorn.run("api.main:app", host="127.0.0.1", port=8000, reload=True)
 
 
 if __name__ == "__main__":
