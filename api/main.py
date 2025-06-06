@@ -9,8 +9,8 @@ from analytics.portfolio import analizar_portafolio
 from backtests.ema_s2f_backtest import run_backtest
 from storage.database import get_price_on, init_db, init_engine
 
-from .database import Base, engine, get_db, SessionLocal
-from .models import Price, Evaluation
+from .database import Base, SessionLocal, engine, get_db
+from .models import Evaluation, Price
 from .schemas import (
     BacktestRequest,
     BacktestResult,
