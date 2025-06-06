@@ -62,6 +62,13 @@ La respuesta indica el valor actual del portafolio y si la estrategia supera al
 }
 ```
 
+Además existe el componente `EvaluationHistory` (ver
+`frontend/EvaluationHistory.jsx`) que consulta el endpoint `/api/evaluations` y
+muestra en una tabla el historial de evaluaciones con fecha, moneda,
+estrategia y el diferencial de retorno frente a un enfoque de holdear. Las
+filas pueden ordenarse por fecha o `coin_id` y al hacer clic se despliegan los
+detalles completos de la evaluación.
+
 ## Dependencias
 
 Las dependencias necesarias se detallan en [requirements.txt](requirements.txt):
