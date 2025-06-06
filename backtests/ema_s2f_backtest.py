@@ -1,24 +1,18 @@
 import argparse
 from math import sqrt
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from storage.models import get_price_history_df
 from strategies.ema_s2f import evaluar_estrategia
 
-EXCEL_FILE = Path("bitcoin_prices.xlsx")
 
-
-def backtest(save_path: str | None = None):
-    if not EXCEL_FILE.exists():
-        print("No se encontró el archivo de precios.")
-        return
-
-    df = pd.read_excel(EXCEL_FILE)
+def backtest(save_path: str | None = None, coin_id: str = "bitcoin"):
+    df = get_price_history_df(coin_id)
     required_cols = {"Fecha", "Precio USD", "Desviación S2F %"}
     if not required_cols.issubset(df.columns):
-        print("El archivo no contiene las columnas necesarias para el backtest.")
+        print("No se encontraron datos suficientes para el backtest.")
         return
 
     capital = 10000.0
@@ -102,5 +96,11 @@ if __name__ == "__main__":
         help="Ruta para guardar la curva de capital",
         required=False,
     )
+    parser.add_argument(
+        "--coin-id",
+        dest="coin_id",
+        default="bitcoin",
+        help="Activo sobre el que ejecutar el backtest",
+    )
     args = parser.parse_args()
-    backtest(args.save)
+    backtest(args.save, coin_id=args.coin_id)
