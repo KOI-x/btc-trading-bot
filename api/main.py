@@ -1,10 +1,10 @@
 import asyncio
-import io
 from datetime import date
+import io
 
-import pandas as pd
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+import pandas as pd
 from sqlalchemy.orm import Session, sessionmaker
 
 from analytics.performance import comparar_vs_hold
