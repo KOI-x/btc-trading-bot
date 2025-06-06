@@ -1,13 +1,14 @@
-import os, sys
+import os
+import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from datetime import date
+from datetime import date  # noqa: E402
 
-import pytest
-from sqlalchemy.orm import sessionmaker
+import pytest  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
 
-from storage.database import (
+from storage.database import (  # noqa: E402
     PriceHistory,
     get_price_on,
     ingest_price_history,
