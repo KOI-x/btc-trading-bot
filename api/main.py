@@ -69,9 +69,7 @@ async def portfolio_eval(
             .first()
         )
         if latest is None:
-            raise HTTPException(
-                status_code=404, detail=f"no prices for {item.coin_id}"
-            )
+            raise HTTPException(status_code=404, detail=f"no prices for {item.coin_id}")
         total_now += latest.price_usd * item.amount
 
         buy_price = (
