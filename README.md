@@ -79,3 +79,10 @@ python backtests/run_grid.py
 ```bash
 python tools/ensure_data_and_run.py backtests.ema_s2f_backtest --save equity.png
 ```
+
+## Soporte Multi-Fiat
+
+La ingesta de precios ahora almacena valores no solo en USD sino también en CLP y EUR.
+Se consulta `exchangerate.host` para obtener los tipos de cambio históricos, con
+`CoinGecko` como respaldo en caso de error. Las tasas se mantienen en memoria para
+evitar llamadas repetidas cuando se procesan varias monedas para la misma fecha.
