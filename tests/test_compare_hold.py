@@ -50,10 +50,10 @@ def test_comparar_vs_hold_mejor():
         "btc",
         "2024-01-01",
         "2024-01-02",
-        {"equity_curve": [1.0, 1.3]},
+        [1.0, 1.3],
         db_url=url,
     )
-    assert result["estrategia_vs_hold"] == "mejor"
+    assert result["comparacion"] == "mejor"
     assert result["retorno_hold"] == pytest.approx(0.2)
     assert result["retorno_estrategia"] == pytest.approx(0.3)
 
@@ -80,7 +80,7 @@ def test_comparar_vs_hold_peor():
         "btc",
         "2024-01-01",
         "2024-01-02",
-        {"equity_curve": [1.0, 1.05]},
+        [1.0, 1.05],
         db_url=url,
     )
-    assert result["estrategia_vs_hold"] == "peor"
+    assert result["comparacion"] == "peor"
