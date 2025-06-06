@@ -6,3 +6,4 @@ matplotlib
 black
 isort
 flake8
+SQLAlchemy
