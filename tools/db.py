@@ -8,7 +8,6 @@ from pathlib import Path
 
 from config import DATABASE_URL
 
-
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
 
