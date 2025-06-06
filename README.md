@@ -69,6 +69,11 @@ estrategia y el diferencial de retorno frente a un enfoque de holdear. Las
 filas pueden ordenarse por fecha o `coin_id` y al hacer clic se despliegan los
 detalles completos de la evaluación.
 
+Para guardar estos resultados se añadió el endpoint `/api/evaluation/export`.
+Recibe el mismo JSON que `/api/portfolio/eval` y permite indicar el formato
+`format` como `csv` o `pdf`. El archivo descargable incluye coin_id, estrategia,
+fecha, retornos, curva de equity y una sugerencia final comparando con holdear.
+
 ## Dependencias
 
 Las dependencias necesarias se detallan en [requirements.txt](requirements.txt):
@@ -77,6 +82,7 @@ Las dependencias necesarias se detallan en [requirements.txt](requirements.txt):
 - pandas
 - matplotlib
 - openpyxl
+- reportlab
 - schedule
 
 ## Contribuir

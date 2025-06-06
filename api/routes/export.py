@@ -10,11 +10,13 @@ from services.evaluation import evaluate_request
 
 from ..schemas import PortfolioItem
 from ..utils.export_csv import export_evaluation_csv
+from ..utils.export_pdf import export_evaluation_pdf
 
 
 class ExportRequest(BaseModel):
     portfolio: List[PortfolioItem]
     strategy: str
+    format: str = "csv"
 
 
 router = APIRouter()
@@ -26,6 +28,13 @@ def export_evaluation(request: ExportRequest) -> StreamingResponse:
         result = evaluate_request(request.dict())
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    csv_buffer = export_evaluation_csv(result["results"])
+    if request.format == "pdf":
+        pdf_buffer = export_evaluation_pdf(result["results"], result["suggestion"])
+        headers = {"Content-Disposition": "attachment; filename=evaluation.pdf"}
+        return StreamingResponse(
+            pdf_buffer, media_type="application/pdf", headers=headers
+        )
+
+    csv_buffer = export_evaluation_csv(result["results"], result["suggestion"])
     headers = {"Content-Disposition": "attachment; filename=evaluation.csv"}
     return StreamingResponse(csv_buffer, media_type="text/csv", headers=headers)

@@ -1,4 +1,6 @@
 black
 fastapi
 flake8
+pandas
+reportlab
 
