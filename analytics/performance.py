@@ -5,6 +5,7 @@ from typing import Any, List
 
 from sqlalchemy.orm import sessionmaker
 
+from config import DATABASE_URL
 from storage.database import get_price_on, init_db, init_engine
 
 
@@ -13,7 +14,7 @@ def comparar_vs_hold(
     fecha_inicio: str,
     fecha_fin: str,
     equity_curve: List[float],
-    db_url: str = "sqlite:///prices.sqlite",
+    db_url: str = DATABASE_URL,
 ) -> dict[str, Any]:
     """Compara el rendimiento de una estrategia con la estrategia de buy & hold.
 

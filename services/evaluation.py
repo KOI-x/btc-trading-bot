@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 
 from analytics.performance import comparar_vs_hold
 from backtests.ema_s2f_backtest import run_backtest
+from config import DATABASE_URL
 from storage.database import get_price_on, init_db, init_engine
 
 
@@ -19,7 +20,7 @@ def evaluate_request(input_data: Dict[str, Any]) -> Dict[str, Any]:
     if not portfolio:
         raise ValueError("Portfolio cannot be empty")
 
-    engine = init_engine("sqlite:///prices.sqlite")
+    engine = init_engine(DATABASE_URL)
     init_db(engine)
     Session = sessionmaker(bind=engine)
 

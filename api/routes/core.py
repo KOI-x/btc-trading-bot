@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from analytics.performance import comparar_vs_hold
 from analytics.portfolio import analizar_portafolio
 from backtests.ema_s2f_backtest import run_backtest
+from config import DATABASE_URL
 from storage.database import get_price_on, init_db, init_engine
 
 from ..database import Base, SessionLocal, engine, get_db
@@ -91,7 +92,7 @@ async def eval_portfolio(request: PortfolioEvalRequest) -> PortfolioEvalResponse
 
     loop = asyncio.get_running_loop()
 
-    engine = init_engine("sqlite:///prices.sqlite")
+    engine = init_engine(DATABASE_URL)
     init_db(engine)
     Session = sessionmaker(bind=engine)
 

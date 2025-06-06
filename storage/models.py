@@ -1,11 +1,10 @@
-from pathlib import Path
-
 import pandas as pd
 from sqlalchemy import Column, Float, Integer, String, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-DB_FILE = Path("prices.sqlite")
-engine = create_engine(f"sqlite:///{DB_FILE}")
+from config import DATABASE_URL
+
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
