@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Date, Float, Integer, String
+from sqlalchemy import Column, Date, DateTime, Float, Integer, String, JSON
+from datetime import datetime
 
 from .database import Base
 
@@ -10,3 +11,16 @@ class Price(Base):
     coin_id = Column(String, index=True)
     date = Column(Date)
     price_usd = Column(Float)
+
+
+class Evaluation(Base):
+    """Persisted record of a portfolio evaluation."""
+
+    __tablename__ = "evaluations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    coin_id = Column(String, nullable=False)
+    strategy = Column(String, nullable=False)
+    input_data = Column(JSON, nullable=False)
+    result_data = Column(JSON, nullable=False)
