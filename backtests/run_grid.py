@@ -2,26 +2,22 @@
 
 import importlib
 import itertools
-from pathlib import Path
 
 import pandas as pd
 
+from storage.models import get_price_history_df
 from tools.ensure_data_and_run import ensure_data
 
-EXCEL_FILE = Path("bitcoin_prices.xlsx")
+
+def load_data(coin_id: str) -> pd.DataFrame:
+    return get_price_history_df(coin_id)
 
 
-def load_data() -> pd.DataFrame:
-    if not EXCEL_FILE.exists():
-        raise FileNotFoundError("No se encontró el archivo de precios")
-    return pd.read_excel(EXCEL_FILE)
-
-
-def run_backtest(module_name: str, **params) -> tuple[float, float]:
+def run_backtest(module_name: str, coin_id: str, **params) -> tuple[float, float]:
     module = importlib.import_module(module_name)
     strategy = getattr(module, "evaluar_estrategia")
 
-    df = load_data()
+    df = load_data(coin_id)
     capital = 10000.0
     position = False
     entry_price = 0.0
@@ -53,7 +49,7 @@ def run_backtest(module_name: str, **params) -> tuple[float, float]:
     return capital, sharpe
 
 
-def main():
+def main(coin_id: str) -> None:
     ensure_data()
     grid = {
         "strategies.rsi_mean_reversion": {
@@ -72,7 +68,7 @@ def main():
         keys, values = zip(*param_grid.items())
         for combo in itertools.product(*values):
             params = dict(zip(keys, combo))
-            final_capital, sharpe = run_backtest(module_name, **params)
+            final_capital, sharpe = run_backtest(module_name, coin_id, **params)
             results.append(
                 {
                     "strategy": module_name,
@@ -87,4 +83,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--coin-id",
+        dest="coin_id",
+        default="bitcoin",
+        help="Activo sobre el que ejecutar el backtest",
+    )
+    args = parser.parse_args()
+    main(args.coin_id)

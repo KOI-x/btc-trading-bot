@@ -1,11 +1,4 @@
 black
 fastapi
 flake8
-isort
-matplotlib
-openpyxl
-pandas
-requests
-schedule
-SQLAlchemy
-uvicorn[standard]
+

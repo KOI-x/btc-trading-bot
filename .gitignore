@@ -194,3 +194,4 @@ cython_debug/
 .cursorindexingignore
 bitcoin_prices.xlsx
 
+database.db
