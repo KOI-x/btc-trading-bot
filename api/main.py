@@ -3,10 +3,11 @@ import asyncio
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
+from backtests.ema_s2f_backtest import run_backtest
+
 from .database import Base, engine, get_db
 from .models import Price
 from .schemas import BacktestRequest, BacktestResult, PriceOut
-from backtests.ema_s2f_backtest import run_backtest
 
 app = FastAPI()
 
