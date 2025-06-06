@@ -8,6 +8,59 @@ from storage.models import get_price_history_df
 from strategies.ema_s2f import evaluar_estrategia
 
 
+def run_backtest(coin_id: str, initial_capital: float = 10000.0) -> dict:
+    """Run the EMA S2F strategy and return key metrics."""
+
+    df = get_price_history_df(coin_id)
+    required_cols = {"Fecha", "Precio USD", "Desviación S2F %"}
+    if not required_cols.issubset(df.columns):
+        msg = "Datos insuficientes para el backtest"
+        raise ValueError(msg)
+
+    capital = float(initial_capital)
+    position = False
+    entry_price = 0.0
+    equity_curve: list[float] = []
+
+    for i in range(len(df)):
+        sub_df = df.iloc[: i + 1]
+        signal = evaluar_estrategia(sub_df)
+        price = df.loc[i, "Precio USD"]
+
+        if signal == "BUY" and not position:
+            position = True
+            entry_price = price
+        elif signal == "SELL" and position:
+            capital *= price / entry_price
+            position = False
+
+        equity = capital * (price / entry_price) if position else capital
+        equity_curve.append(float(equity))
+
+    if position:
+        price = df.iloc[-1]["Precio USD"]
+        capital *= price / entry_price
+        equity_curve[-1] = float(capital)
+
+    equity_series = pd.Series(equity_curve)
+    start = pd.to_datetime(df["Fecha"].iloc[0])
+    end = pd.to_datetime(df["Fecha"].iloc[-1])
+    days = (end - start).days
+    cagr = (capital / initial_capital) ** (365 / days) - 1 if days else 0.0
+    returns = equity_series.pct_change().dropna()
+    if returns.empty:
+        sharpe = 0.0
+    else:
+        sharpe = (returns.mean() / returns.std()) * sqrt(365)
+
+    return {
+        "total_return": capital / initial_capital - 1,
+        "cagr": cagr,
+        "sharpe": sharpe,
+        "equity_curve": equity_curve,
+    }
+
+
 def backtest(save_path: str | None = None, coin_id: str = "bitcoin"):
     df = get_price_history_df(coin_id)
     required_cols = {"Fecha", "Precio USD", "Desviación S2F %"}
@@ -66,7 +119,10 @@ def backtest(save_path: str | None = None, coin_id: str = "bitcoin"):
         cagr = (capital / 10000.0) ** (365 / days) - 1
 
     returns = equity_series.pct_change().dropna()
-    sharpe = (returns.mean() / returns.std() * sqrt(365)) if not returns.empty else 0.0
+    if returns.empty:
+        sharpe = 0.0
+    else:
+        sharpe = (returns.mean() / returns.std()) * sqrt(365)
 
     print(f"Valor final de la cuenta: ${capital:.2f}")
     print(f"Cantidad de operaciones: {trades}")
