@@ -6,3 +6,6 @@ matplotlib
 black
 isort
 flake8
+fastapi
+uvicorn[standard]
+SQLAlchemy
