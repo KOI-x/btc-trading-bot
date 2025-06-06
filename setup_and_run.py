@@ -46,21 +46,11 @@ def seed_prices() -> None:
 
 
 def ensure_database() -> None:
-    """Create database file and tables if needed."""
-    from api.database import Base, engine
-    from config import DATABASE_URL
+    """Ensure DB exists and apply migrations."""
+    from tools.db import init_db
 
-    db_path = _sqlite_path(DATABASE_URL)
-    first_time = False
-    if db_path and not db_path.exists():
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        first_time = True
-
-    Base.metadata.create_all(bind=engine)
-
-    if first_time:
-        print("✅ DB creada")
-        seed_prices()
+    init_db()
+    seed_prices()
 
 
 def main() -> None:

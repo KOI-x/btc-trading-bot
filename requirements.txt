@@ -53,3 +53,4 @@ typing_extensions==4.13.2
 tzdata==2025.2
 urllib3==2.4.0
 uvicorn==0.34.3
+alembic==1.13.1
