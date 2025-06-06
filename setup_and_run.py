@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import csv
+import logging
 from datetime import datetime
 from pathlib import Path
-import logging
 
 import uvicorn
 from dotenv import load_dotenv

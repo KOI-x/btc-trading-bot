@@ -11,11 +11,13 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from config import DATABASE_URL
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import inspect
-from api.database import Base as ApiBase, engine as api_engine
+
+from api.database import Base as ApiBase
+from api.database import engine as api_engine
+from config import DATABASE_URL
 from storage.database import Base as StorageBase
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
