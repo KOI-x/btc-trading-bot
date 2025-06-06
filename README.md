@@ -32,6 +32,14 @@ uvicorn api.main:app --reload
 Luego visita `http://localhost:8000/api/prices/{coin_id}` para obtener el
 historial diario en formato JSON.
 
+## Frontend de simulación
+
+Se incluye un componente React llamado `StrategySimulator` (ver
+`frontend/StrategySimulator.jsx`) que permite evaluar de forma interactiva
+distintas estrategias sobre un monto inicial. El formulario envía los datos al
+endpoint `/api/portfolio/eval` y muestra el retorno de la estrategia comparado
+con mantener la posición (hold).
+
 ## Dependencias
 
 Las dependencias necesarias se detallan en [requirements.txt](requirements.txt):
