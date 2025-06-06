@@ -3,4 +3,7 @@ fastapi
 flake8
 pandas
 reportlab
-
+requests
+sqlalchemy
+uvicorn
+python-dotenv
