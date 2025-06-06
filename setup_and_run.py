@@ -67,7 +67,7 @@ def main() -> None:
     load_dotenv()
     ensure_database()
     print("🚀 Servidor corriendo en http://localhost:8000")
-    uvicorn.run("api.main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("api.main:app", host="0.0.0.0", port=8000)
 
 
 if __name__ == "__main__":
