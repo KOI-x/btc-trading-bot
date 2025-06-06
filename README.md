@@ -134,3 +134,16 @@ La ingesta de precios ahora almacena valores no solo en USD sino también en CLP
 Se consulta `exchangerate.host` para obtener los tipos de cambio históricos, con
 `CoinGecko` como respaldo en caso de error. Las tasas se mantienen en memoria para
 evitar llamadas repetidas cuando se procesan varias monedas para la misma fecha.
+
+## Migraciones de base de datos
+
+El proyecto utiliza **Alembic** para versionar el esquema. Los comandos
+principales están disponibles en `tools/db.py`:
+
+```bash
+python tools/db.py init    # crea el archivo de base de datos y aplica migraciones
+python tools/db.py upgrade # aplica los cambios pendientes
+```
+
+`init` es seguro de ejecutar varias veces; si la base de datos ya existe,
+simplemente se ejecutan las migraciones.
