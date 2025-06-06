@@ -8,10 +8,14 @@ from storage.models import get_price_history_df
 from strategies.ema_s2f import evaluar_estrategia
 
 
-def run_backtest(coin_id: str, initial_capital: float = 10000.0) -> dict:
+def run_backtest(
+    coin_id: str, initial_capital: float = 10000.0, start_date: str | None = None
+) -> dict:
     """Run the EMA S2F strategy and return key metrics."""
 
     df = get_price_history_df(coin_id)
+    if start_date is not None:
+        df = df[df["Fecha"] >= start_date].reset_index(drop=True)
     required_cols = {"Fecha", "Precio USD", "Desviación S2F %"}
     if not required_cols.issubset(df.columns):
         msg = "Datos insuficientes para el backtest"

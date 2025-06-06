@@ -40,6 +40,28 @@ distintas estrategias sobre un monto inicial. El formulario envía los datos al
 endpoint `/api/portfolio/eval` y muestra el retorno de la estrategia comparado
 con mantener la posición (hold).
 
+El endpoint acepta peticiones `POST` con el siguiente cuerpo JSON:
+
+```json
+{
+  "portfolio": [
+    {"coin_id": "bitcoin", "amount": 0.05, "buy_date": "2023-10-01"}
+  ],
+  "strategy": "ema_s2f"
+}
+```
+
+La respuesta indica el valor actual del portafolio y si la estrategia supera al
+`buy & hold`:
+
+```json
+{
+  "total_value_now": 1234.5,
+  "estrategia_vs_hold": "mejor",
+  "comentario": "Tu estrategia supera al hold en un 12%"
+}
+```
+
 ## Dependencias
 
 Las dependencias necesarias se detallan en [requirements.txt](requirements.txt):

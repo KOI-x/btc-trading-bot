@@ -26,3 +26,20 @@ class BacktestResult(BaseModel):
     cagr: float
     sharpe: float
     equity_curve: list[float]
+
+
+class PortfolioItem(BaseModel):
+    coin_id: str
+    amount: float
+    buy_date: date
+
+
+class PortfolioEvalRequest(BaseModel):
+    portfolio: list[PortfolioItem]
+    strategy: str
+
+
+class PortfolioEvalResponse(BaseModel):
+    total_value_now: float
+    estrategia_vs_hold: str
+    comentario: str
