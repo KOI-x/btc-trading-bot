@@ -1,0 +1,51 @@
+#root {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.field label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.2rem;
+}
+
+.field input,
+.field select {
+  padding: 0.3rem;
+  width: 100%;
+}
+
+button {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.error {
+  color: red;
+  margin-bottom: 0.5rem;
+}
+
+.result,
+.history table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.result th,
+.result td,
+.history th,
+.history td {
+  border: 1px solid #ccc;
+  padding: 0.25rem;
+  text-align: left;
+}

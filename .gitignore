@@ -195,3 +195,8 @@ cython_debug/
 bitcoin_prices.xlsx
 
 database.db
+
+# Frontend build artifacts
+frontend/node_modules/
+frontend/dist/
+
