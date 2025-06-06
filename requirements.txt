@@ -1,9 +1,4 @@
-requests
-openpyxl
-schedule
-pandas
-matplotlib
 black
-isort
+fastapi
 flake8
-SQLAlchemy
+

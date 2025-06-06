@@ -20,6 +20,18 @@ pip install -r requirements.txt
 python setup_and_run.py
 ```
 
+## API REST
+
+Este repositorio incluye un backend en FastAPI listo para servir precios
+almacenados en una base de datos SQLite. Para lanzarlo ejecuta:
+
+```bash
+uvicorn api.main:app --reload
+```
+
+Luego visita `http://localhost:8000/api/prices/{coin_id}` para obtener el
+historial diario en formato JSON.
+
 ## Dependencias
 
 Las dependencias necesarias se detallan en [requirements.txt](requirements.txt):
