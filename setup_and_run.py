@@ -7,13 +7,6 @@ from pathlib import Path
 import uvicorn
 from dotenv import load_dotenv
 
-# Load environment variables before importing modules that rely on them
-load_dotenv()
-
-from api.database import Base, SessionLocal, engine
-from api.models import Price
-from config import DATABASE_URL
-
 ROOT_DIR = Path(__file__).resolve().parent
 
 
@@ -30,6 +23,9 @@ def _sqlite_path(url: str) -> Path | None:
 
 def seed_prices() -> None:
     """Load initial price data from ``fixtures/seed_prices.csv`` if present."""
+    from api.database import SessionLocal
+    from api.models import Price
+
     csv_path = ROOT_DIR / "fixtures" / "seed_prices.csv"
     if not csv_path.exists():
         return
@@ -51,6 +47,9 @@ def seed_prices() -> None:
 
 def ensure_database() -> None:
     """Create database file and tables if needed."""
+    from api.database import Base, engine
+    from config import DATABASE_URL
+
     db_path = _sqlite_path(DATABASE_URL)
     first_time = False
     if db_path and not db_path.exists():
@@ -65,6 +64,7 @@ def ensure_database() -> None:
 
 
 def main() -> None:
+    load_dotenv()
     ensure_database()
     print("🚀 Servidor corriendo en http://localhost:8000")
     uvicorn.run("api.main:app", host="127.0.0.1", port=8000, reload=True)
