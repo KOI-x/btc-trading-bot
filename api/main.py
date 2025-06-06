@@ -1,5 +1,5 @@
 import asyncio
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session, sessionmaker
@@ -9,8 +9,8 @@ from analytics.portfolio import analizar_portafolio
 from backtests.ema_s2f_backtest import run_backtest
 from storage.database import get_price_on, init_db, init_engine
 
-from .database import Base, engine, get_db
-from .models import Price
+from .database import Base, SessionLocal, engine, get_db
+from .models import Evaluation, Price
 from .schemas import (
     BacktestRequest,
     BacktestResult,
@@ -23,6 +23,22 @@ app = FastAPI()
 
 # Create tables if they don't exist
 Base.metadata.create_all(bind=engine)
+
+
+def save_evaluation(
+    coin_id: str, strategy: str, input_data: dict, result_data: dict
+) -> None:
+    """Persist evaluation call parameters and results to the database."""
+    with SessionLocal() as session:
+        record = Evaluation(
+            timestamp=datetime.utcnow(),
+            coin_id=coin_id,
+            strategy=strategy,
+            input_data=input_data,
+            result_data=result_data,
+        )
+        session.add(record)
+        session.commit()
 
 
 @app.get("/api/prices/{coin_id}", response_model=list[PriceOut])
@@ -123,9 +139,17 @@ async def eval_portfolio(request: PortfolioEvalRequest) -> PortfolioEvalResponse
         comentario = f"Hold era mejor por {abs(diff_pct):.0f}%"
     else:
         comentario = "La estrategia obtuvo el mismo retorno que holdear"
-
-    return PortfolioEvalResponse(
+    response = PortfolioEvalResponse(
         total_value_now=total_value_now,
         estrategia_vs_hold=comparacion,
         comentario=comentario,
     )
+
+    save_evaluation(
+        coin_id=",".join(it.coin_id for it in request.portfolio),
+        strategy=request.strategy,
+        input_data=request.dict(),
+        result_data=response.dict(),
+    )
+
+    return response
