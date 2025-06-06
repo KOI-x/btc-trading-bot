@@ -29,6 +29,11 @@ almacenados en una base de datos SQLite. Para lanzarlo ejecuta:
 uvicorn api.main:app --reload
 ```
 
+La ruta de la base de datos puede configurarse con la variable de entorno
+`DATABASE_URL` (por defecto `sqlite:///./data/database.db`).
+⚙️ Crea un archivo `.env` con dicha variable. Puedes basarte en
+`.env.example`.
+
 Luego visita `http://localhost:8000/api/prices/{coin_id}` para obtener el
 historial diario en formato JSON.
 
