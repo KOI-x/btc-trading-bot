@@ -28,6 +28,7 @@ def _load_prices(
             "date": r.date,
             "price_usd": r.price_usd,
             "price_clp": r.price_clp,
+            "price_eur": r.price_eur,
         }
         for r in rows
     ]
@@ -68,6 +69,7 @@ def analizar_portafolio(operaciones: Iterable[dict]) -> pd.DataFrame:
     df_result = pd.DataFrame({"date": dates}).set_index("date")
     total_usd = pd.Series(0.0, index=dates)
     total_clp = pd.Series(0.0, index=dates, dtype=float)
+    total_eur = pd.Series(0.0, index=dates, dtype=float)
 
     for coin in coins:
         price_df = price_map.get(coin)
@@ -90,11 +92,16 @@ def analizar_portafolio(operaciones: Iterable[dict]) -> pd.DataFrame:
         if clp_series is not None:
             clp_vals = holdings * clp_series
             total_clp += clp_vals.fillna(0)
+        eur_series = price_df.get("price_eur")
+        if eur_series is not None:
+            eur_vals = holdings * eur_series
+            total_eur += eur_vals.fillna(0)
 
     df_result["total_value_usd"] = total_usd
     df_result["total_value_clp"] = total_clp
+    df_result["total_value_eur"] = total_eur
     df_result.reset_index(inplace=True)
-    cols = ["date", "total_value_usd", "total_value_clp"] + coins
+    cols = ["date", "total_value_usd", "total_value_clp", "total_value_eur"] + coins
     return df_result[cols]
 
 

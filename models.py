@@ -25,6 +25,7 @@ class PriceHistory(Base):
     date = Column(Date, nullable=False)
     price_usd = Column(Float, nullable=False)
     price_clp = Column(Float)
+    price_eur = Column(Float)
     pct_change_24h = Column(Float)
     s2f_deviation = Column(Float)
 
