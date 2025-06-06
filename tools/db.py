@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import argparse
-import subprocess
 from pathlib import Path
 
 from config import DATABASE_URL
+from alembic import command
+from alembic.config import Config
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
@@ -29,9 +30,22 @@ def init_db() -> None:
     upgrade_db()
 
 
+def _alembic_cfg() -> Config:
+    cfg = Config(str(ROOT_DIR / "alembic.ini"))
+    cfg.set_main_option("script_location", str(ROOT_DIR / "migrations"))
+    cfg.set_main_option("sqlalchemy.url", DATABASE_URL)
+    return cfg
+
+
+def _has_migrations() -> bool:
+    return any((ROOT_DIR / "migrations" / "versions").glob("*.py"))
+
+
 def upgrade_db() -> None:
-    """Apply pending Alembic migrations."""
-    subprocess.run(["alembic", "upgrade", "head"], check=True)
+    """Apply pending Alembic migrations if any exist."""
+    if not _has_migrations():
+        return
+    command.upgrade(_alembic_cfg(), "head")
 
 
 def main() -> None:
