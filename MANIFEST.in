@@ -1,0 +1,1 @@
+recursive-include fixtures *.csv

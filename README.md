@@ -195,6 +195,17 @@ python tools/db.py upgrade # aplica los cambios pendientes
 `init` es seguro de ejecutar varias veces; si la base de datos ya existe,
 simplemente se ejecutan las migraciones.
 
+## Cargar fixtures locales
+
+Los archivos CSV con historial desde 2020 se encuentran en
+`fixtures/price_history`. Para precargar la base de datos sin conexión ejecuta:
+
+```bash
+python -m tools.load_fixtures
+```
+
+Luego puedes correr el bot o los backtests incluso sin acceso a internet.
+
 ## Ejecutar el frontend React
 
 El directorio [`frontend`](frontend) contiene una aplicación creada con Vite.
