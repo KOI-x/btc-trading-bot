@@ -18,6 +18,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from tools.db import init_db
+
 EXCEL_FILE = Path("bitcoin_prices.xlsx")
 
 
@@ -37,6 +39,10 @@ def main() -> None:
     args, remainder = parser.parse_known_args()
 
     ensure_data()
+    try:
+        init_db()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[WARN] Could not initialize DB: {exc}")
 
     sys.argv = [args.module] + remainder
     runpy.run_module(args.module, run_name="__main__")
