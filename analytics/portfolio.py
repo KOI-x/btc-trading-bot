@@ -4,9 +4,10 @@ from datetime import date
 from typing import Iterable
 
 import pandas as pd
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
-from models import PriceHistory, SessionLocal, init_db
+from config import DATABASE_URL
+from storage.database import PriceHistory, init_db, init_engine
 
 
 def _load_prices(
@@ -34,7 +35,7 @@ def _load_prices(
     ]
     df = pd.DataFrame(data)
     if not df.empty:
-        df.set_index("date", inplace=True)
+        df = df.set_index("date")
     return df
 
 
@@ -62,8 +63,10 @@ def analizar_portafolio(operaciones: Iterable[dict]) -> pd.DataFrame:
     dates = pd.date_range(start, end, freq="D").date
     coins = sorted(ops_df["coin_id"].unique())
 
-    init_db()
-    with SessionLocal() as session:
+    engine = init_engine(DATABASE_URL)
+    init_db(engine)
+    Session = sessionmaker(bind=engine)
+    with Session() as session:
         price_map = {coin: _load_prices(session, coin, start, end) for coin in coins}
 
     df_result = pd.DataFrame({"date": dates}).set_index("date")
@@ -100,7 +103,7 @@ def analizar_portafolio(operaciones: Iterable[dict]) -> pd.DataFrame:
     df_result["total_value_usd"] = total_usd
     df_result["total_value_clp"] = total_clp
     df_result["total_value_eur"] = total_eur
-    df_result.reset_index(inplace=True)
+    df_result = df_result.reset_index()
     cols = ["date", "total_value_usd", "total_value_clp", "total_value_eur"] + coins
     return df_result[cols]
 
