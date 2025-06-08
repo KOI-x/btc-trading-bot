@@ -5,7 +5,7 @@ import itertools
 
 import pandas as pd
 
-from storage.models import get_price_history_df
+from storage.database import get_price_history_df
 from tools.ensure_data_and_run import ensure_data
 
 
