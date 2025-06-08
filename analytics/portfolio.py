@@ -6,7 +6,7 @@ from typing import Iterable
 import pandas as pd
 from sqlalchemy.orm import Session
 
-from models import PriceHistory, SessionLocal, init_db
+from storage.database import PriceHistory, SessionLocal, init_db
 
 
 def _load_prices(

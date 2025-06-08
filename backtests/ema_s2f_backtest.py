@@ -4,7 +4,7 @@ from math import sqrt
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from storage.models import get_price_history_df
+from storage.database import get_price_history_df
 from strategies.ema_s2f import evaluar_estrategia
 
 
