@@ -128,6 +128,27 @@ python backtests/run_grid.py
 python tools/ensure_data_and_run.py backtests.ema_s2f_backtest --save equity.png
 ```
 
+## Guía paso a paso para backtesting
+
+1. Inicializa (o reinicia) la base de datos:
+
+```bash
+python -m tools.db init
+# o para empezar desde cero
+python tools/reset_db.py --force
+```
+
+2. Ejecuta el backtest usando `python -m` para que funcione el `PYTHONPATH`:
+
+```bash
+python -m tools.ensure_data_and_run backtests.ema_s2f_backtest --save equity.png
+```
+
+Si recibes un error `OperationalError` sobre columnas faltantes, elimina el
+archivo `data/database.db` y vuelve a ejecutar los comandos anteriores. En caso
+de un error 429 por demasiadas peticiones a CoinGecko, espera unos minutos y
+vuelve a intentar.
+
 ## Soporte Multi-Fiat
 
 La ingesta de precios ahora almacena valores no solo en USD sino también en CLP y EUR.
