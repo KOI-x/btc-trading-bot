@@ -122,6 +122,32 @@ Para experimentar con distintas estrategias y parámetros puedes ejecutar el gri
 python backtests/run_grid.py
 ```
 
+### Hooks de pre-commit
+
+1. Instala dependencias de desarrollo  
+   ```bash
+   pip install -r requirements-dev.txt
+   ```
+
+2. Activa los hooks
+
+   ```bash
+   pre-commit install
+   ```
+
+Para formatear todo el proyecto de golpe:
+
+```bash
+pre-commit run --all-files
+```
+
+También puedes instalarlos con Make:
+
+```make
+make hooks
+```
+
+
 ## Ejemplo de backtest con verificación de datos
 
 ```bash
