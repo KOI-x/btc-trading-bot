@@ -84,9 +84,7 @@ def ingest_price_history(
     price_eur = float(Decimal(str(price_usd)) * rates["EUR"])
 
     s2f_val = s2f_fn(at)
-    s2f_dev = (
-        calcular_desviacion(price_usd, s2f_val) if s2f_val is not None else None
-    )
+    s2f_dev = calcular_desviacion(price_usd, s2f_val) if s2f_val is not None else None
 
     record = session.query(PriceHistory).filter_by(coin_id=coin_id, date=at).first()
     if record is None:
