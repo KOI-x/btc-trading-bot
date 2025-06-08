@@ -5,6 +5,7 @@ from datetime import date
 from decimal import Decimal
 from typing import Callable, Dict
 
+import pandas as pd
 from sqlalchemy import (
     Column,
     Date,
@@ -16,6 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Session, declarative_base
 
+from analytics.s2f import calcular_desviacion, obtener_valor_s2f
 from data_ingestion.errors import IngestionError
 from data_ingestion.exchangerate_client import get_rates_for_date
 
@@ -32,6 +34,7 @@ class PriceHistory(Base):
     price_usd = Column(Float, nullable=False)
     price_clp = Column(Float)
     price_eur = Column(Float)
+    s2f_deviation = Column(Float)
     __table_args__ = (UniqueConstraint("coin_id", "date", name="uix_coin_date"),)
 
 
@@ -72,6 +75,9 @@ def ingest_price_history(
     price_clp = float(Decimal(str(price_usd)) * rates["CLP"])
     price_eur = float(Decimal(str(price_usd)) * rates["EUR"])
 
+    s2f_val = obtener_valor_s2f(at.isoformat())
+    s2f_dev = calcular_desviacion(price_usd, s2f_val) if s2f_val is not None else None
+
     record = session.query(PriceHistory).filter_by(coin_id=coin_id, date=at).first()
     if record is None:
         record = PriceHistory(
@@ -80,12 +86,14 @@ def ingest_price_history(
             price_usd=price_usd,
             price_clp=price_clp,
             price_eur=price_eur,
+            s2f_deviation=s2f_dev,
         )
         session.add(record)
     else:
         record.price_usd = price_usd
         record.price_clp = price_clp
         record.price_eur = price_eur
+        record.s2f_deviation = s2f_dev
     session.commit()
     return record
 
@@ -94,3 +102,26 @@ def get_price_on(session: Session, coin_id: str, at: date) -> float | None:
     """Retrieve the price for a coin on a specific date."""
     record = session.query(PriceHistory).filter_by(coin_id=coin_id, date=at).first()
     return record.price_usd if record else None
+
+
+def get_price_history_df(session: Session, coin_id: str) -> pd.DataFrame:
+    """Return historical prices for a coin as DataFrame."""
+    rows = (
+        session.query(PriceHistory)
+        .filter(PriceHistory.coin_id == coin_id)
+        .order_by(PriceHistory.date)
+        .all()
+    )
+    data = [
+        {
+            "Fecha": r.date,
+            "Precio USD": r.price_usd,
+            "Desviación S2F %": r.s2f_deviation,
+        }
+        for r in rows
+    ]
+    df = pd.DataFrame(data)
+    if not df.empty:
+        df["Variación %"] = df["Precio USD"].pct_change() * 100
+        df["Variación %"] = df["Variación %"].fillna(0)
+    return df

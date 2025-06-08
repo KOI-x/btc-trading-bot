@@ -6,9 +6,17 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Iterable
 
 import requests
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker
 
-from models import PriceHistory, SessionLocal, init_db
+from config import DATABASE_URL
+from storage.database import (
+    PriceHistory,
+)
+from storage.database import ingest_price_history as store_price
+from storage.database import (
+    init_db,
+    init_engine,
+)
 
 
 def _daterange(start: datetime, end: datetime) -> Iterable[datetime]:
@@ -27,8 +35,10 @@ def ingest_price_history(coin_id: str) -> None:
     records are not re-downloaded.
     """
 
-    init_db()
-    session = SessionLocal()
+    engine = init_engine(DATABASE_URL)
+    init_db(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
 
     end_date = datetime.now(tz=timezone.utc).date()
     start_date = end_date - timedelta(days=89)
@@ -91,43 +101,19 @@ def ingest_price_history(coin_id: str) -> None:
         if start_date <= day <= end_date:
             date_to_price[day] = price
 
-    prev_day = fetch_start - timedelta(days=1)
-    prev_record = (
-        session.query(PriceHistory)
-        .filter(PriceHistory.coin_id == coin_id)
-        .filter(PriceHistory.date == prev_day)
-        .first()
-    )
-    prev_price = prev_record.price_usd if prev_record else None
-
     for day in sorted(date_to_price):
         price = date_to_price[day]
         if day in cached_dates:
             print(f"[CACHE] {day} ya almacenado, se omite")
-            prev_price = price
             continue
 
-        pct_change = None
-        if prev_price is not None and prev_price != 0:
-            pct_change = (price - prev_price) / prev_price * 100
+        try:
+            store_price(session, coin_id, day, price)
+            print(f"[DESCARGADO] {day} guardado en la base de datos")
+        except Exception as e:  # noqa: BLE001
+            print(f"[ADVERTENCIA] Error al guardar {day}: {e}")
 
-        record = PriceHistory(
-            coin_id=coin_id,
-            date=day,
-            price_usd=price,
-            pct_change_24h=pct_change,
-        )
-        session.add(record)
-        prev_price = price
-        print(f"[DESCARGADO] {day} guardado en la base de datos")
-
-    try:
-        session.commit()
-    except SQLAlchemyError as e:
-        session.rollback()
-        print(f"[ADVERTENCIA] Error al guardar en la base de datos: {e}")
-    finally:
-        session.close()
+    session.close()
 
 
 if __name__ == "__main__":

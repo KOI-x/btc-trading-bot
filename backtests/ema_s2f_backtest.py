@@ -3,8 +3,10 @@ from math import sqrt
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from sqlalchemy.orm import sessionmaker
 
-from storage.models import get_price_history_df
+from config import DATABASE_URL
+from storage.database import get_price_history_df, init_db, init_engine
 from strategies.ema_s2f import evaluar_estrategia
 
 
@@ -13,7 +15,11 @@ def run_backtest(
 ) -> dict:
     """Run the EMA S2F strategy and return key metrics."""
 
-    df = get_price_history_df(coin_id)
+    engine = init_engine(DATABASE_URL)
+    init_db(engine)
+    Session = sessionmaker(bind=engine)
+    with Session() as session:
+        df = get_price_history_df(session, coin_id)
     if start_date is not None:
         df = df[df["Fecha"] >= start_date].reset_index(drop=True)
     required_cols = {"Fecha", "Precio USD", "Desviación S2F %"}
@@ -66,7 +72,11 @@ def run_backtest(
 
 
 def backtest(save_path: str | None = None, coin_id: str = "bitcoin"):
-    df = get_price_history_df(coin_id)
+    engine = init_engine(DATABASE_URL)
+    init_db(engine)
+    Session = sessionmaker(bind=engine)
+    with Session() as session:
+        df = get_price_history_df(session, coin_id)
     required_cols = {"Fecha", "Precio USD", "Desviación S2F %"}
     if not required_cols.issubset(df.columns):
         print("No se encontraron datos suficientes para el backtest.")

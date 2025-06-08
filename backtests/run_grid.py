@@ -4,13 +4,19 @@ import importlib
 import itertools
 
 import pandas as pd
+from sqlalchemy.orm import sessionmaker
 
-from storage.models import get_price_history_df
+from config import DATABASE_URL
+from storage.database import get_price_history_df, init_db, init_engine
 from tools.ensure_data_and_run import ensure_data
 
 
 def load_data(coin_id: str) -> pd.DataFrame:
-    return get_price_history_df(coin_id)
+    engine = init_engine(DATABASE_URL)
+    init_db(engine)
+    Session = sessionmaker(bind=engine)
+    with Session() as session:
+        return get_price_history_df(session, coin_id)
 
 
 def run_backtest(module_name: str, coin_id: str, **params) -> tuple[float, float]:

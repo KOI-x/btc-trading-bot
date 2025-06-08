@@ -147,3 +147,17 @@ python tools/db.py upgrade # aplica los cambios pendientes
 
 `init` es seguro de ejecutar varias veces; si la base de datos ya existe,
 simplemente se ejecutan las migraciones.
+
+## Ejecutar el frontend React
+
+El directorio [`frontend`](frontend) contiene una aplicación creada con Vite.
+Para probar la interfaz web de simulación:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Esto inicia el servidor en `http://localhost:5173` y permite interactuar con los
+endpoints del backend.
