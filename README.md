@@ -19,6 +19,9 @@ pip install -r requirements.txt
 ```bash
 python setup_and_run.py
 ```
+Al ejecutarlo por primera vez se creará la base de datos y se aplicarán automáticamente
+las migraciones de Alembic si existen. Para poblar la tabla de precios puedes ejecutar
+``python run_ingestion.py``.
 
 ## API REST
 
