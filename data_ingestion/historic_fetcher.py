@@ -7,7 +7,7 @@ import random
 import time
 from datetime import date as date_type
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, Tuple
 
 import requests
 from sqlalchemy.orm import sessionmaker
@@ -160,7 +160,10 @@ def fetch_historical_data(
             if rate_limited and attempt < MAX_RETRIES:
                 delay = exponential_backoff(attempt)
                 logger.info(
-                    f"Reintentando en {delay:.1f} segundos... (Intento {attempt + 1}/{MAX_RETRIES})"
+                    "Reintentando en %.1f segundos... (Intento %s/%s)",
+                    delay,
+                    attempt + 1,
+                    MAX_RETRIES,
                 )
                 time.sleep(delay)
                 continue
@@ -173,7 +176,10 @@ def fetch_historical_data(
 
             if attempt == MAX_RETRIES:
                 logger.warning(
-                    f"No se pudieron obtener datos para {current_start} - {current_end} después de {MAX_RETRIES} intentos"
+                    "No se pudieron obtener datos para %s - %s después de %s intentos",
+                    current_start,
+                    current_end,
+                    MAX_RETRIES,
                 )
 
         current_start = current_end + timedelta(days=1)

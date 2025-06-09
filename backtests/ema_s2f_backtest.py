@@ -1,10 +1,8 @@
 import argparse
 import logging
 from enum import Enum, auto
-from math import sqrt
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
-import matplotlib.pyplot as plt
 import pandas as pd
 from sqlalchemy.orm import sessionmaker
 
@@ -72,7 +70,6 @@ def run_backtest(
 
     # Inicializar variables de seguimiento
     capital = float(initial_capital)
-    available_balance = capital
     position_type = PositionType.NONE
     position_size = 0.0
     entry_price = 0.0
@@ -155,7 +152,9 @@ def run_backtest(
                 position_size = (capital * leverage) / current_price
                 entry_price = current_price
                 logger.info(
-                    f"Abrir LARGO - Precio: {current_price:.2f} - Tamaño: {position_size:.6f} BTC"
+                    "Abrir LARGO - Precio: %.2f - Tamaño: %.6f BTC",
+                    current_price,
+                    position_size,
                 )
 
             elif signal == "SELL":
@@ -164,7 +163,9 @@ def run_backtest(
                 position_size = (capital * leverage) / current_price
                 entry_price = current_price
                 logger.info(
-                    f"Abrir CORTO - Precio: {current_price:.2f} - Tamaño: {position_size:.6f} BTC"
+                    "Abrir CORTO - Precio: %.2f - Tamaño: %.6f BTC",
+                    current_price,
+                    position_size,
                 )
 
     # Cerrar cualquier posición abierta al final del backtest
@@ -216,7 +217,6 @@ def run_backtest(
 
 def plot_results(results: Dict[str, Any], save_path: str = None) -> None:
     """Grafica los resultados del backtest incluyendo comparación con holdear."""
-    import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
 
     # Configurar el gráfico
@@ -298,7 +298,8 @@ def backtest(
     print(f"Moneda: {coin_id.upper()}")
     print(f"Stop Loss: {stop_loss*100}% | Take Profit: {take_profit*100}%")
     print(
-        f"Apalancamiento: {leverage}x | Tasa de financiamiento anual: {funding_rate*100}%"
+        f"Apalancamiento: {leverage}x | "
+        f"Tasa de financiamiento anual: {funding_rate*100}%"
     )
     print(f"Fecha actual: {pd.Timestamp.now()}")
     print("-" * 60 + "\n")
@@ -331,12 +332,12 @@ def backtest(
     print(f"\n{'MÉTRICA':<25} {'ESTRATEGIA':<15} {'HOLDEAR':<15}")
     print("-" * 60)
     print(f"{'Capital Inicial:':<25} ${results['initial_capital']:,.2f}")
+    hold_final = initial_price + (initial_price * hold_return / 100)
     print(
-        f"{'Capital Final:':<25} ${results['final_capital']:,.2f} {'$'+str(round(initial_price + (initial_price * hold_return/100),2)):>15}"
+        f"{'Capital Final:':<25} ${results['final_capital']:,.2f} {hold_final:>15,.2f}"
     )
-    print(
-        f"{'Retorno Total (%):':<25} {results['total_return_pct']:>5.2f}% {hold_return:>14.2f}%"
-    )
+    total_pct = results["total_return_pct"]
+    print(f"{'Retorno Total (%):':<25} {total_pct:>5.2f}% {hold_return:>14.2f}%")
     print(f"{'CAGR (%):':<25} {results['cagr_pct']:>5.2f}% {hold_cagr:>14.2f}%")
     print(f"{'Máximo Drawdown (%):':<25} {results['max_drawdown_pct']:>5.2f}%")
     print(f"{'Operaciones:':<25} {results['total_trades']:>5}")
@@ -367,7 +368,6 @@ def backtest(
 
 
 if __name__ == "__main__":
-    import argparse
 
     parser = argparse.ArgumentParser(
         description="Backtest de estrategia de trading con margen"

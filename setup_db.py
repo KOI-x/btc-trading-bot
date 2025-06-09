@@ -1,7 +1,5 @@
 import logging
-import os
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
 
 # Configurar logging

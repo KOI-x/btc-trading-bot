@@ -1,7 +1,6 @@
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
-import numpy as np
 import pandas as pd
 
 # Configurar logging
@@ -12,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 def evaluar_estrategia(df: pd.DataFrame, params: Dict[str, Any] = None) -> str:
-    """Evalúa una estrategia mejorada basada en múltiples EMAs y condiciones de tendencia.
+    """Evalúa una estrategia mejorada basada en múltiples EMAs
+    y condiciones de tendencia.
 
     Parámetros:
         df: DataFrame con columnas ["Fecha", "Precio USD", "Variación %"]
