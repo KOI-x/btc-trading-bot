@@ -12,7 +12,10 @@ logger = logging.getLogger(__name__)
 
 
 def evaluar_estrategia(df: pd.DataFrame, params: Dict[str, Any] = None) -> str:
-    """Evalúa una estrategia mejorada basada en múltiples EMAs y condiciones de tendencia.
+    """Estrategia de Trading EMA + RSI + Tendencia
+
+    Estrategia que combina múltiples medias móviles exponenciales (EMA) con RSI
+    y análisis de volumen para identificar tendencias y puntos de entrada/salida.
 
     Parámetros:
         df: DataFrame con columnas ["Fecha", "Precio USD", "Variación %"]
@@ -63,7 +66,7 @@ def evaluar_estrategia(df: pd.DataFrame, params: Dict[str, Any] = None) -> str:
         rs = gain / loss
         df["RSI"] = 100 - (100 / (1 + rs))
 
-        # Calcular volumen promedio
+        # Calcular volumen promedio si está disponible
         if "Volumen" in df.columns:
             df["VOL_MA"] = df["Volumen"].rolling(window=params["volume_ma"]).mean()
             volume_ok = df["Volumen"].iloc[-1] > (
