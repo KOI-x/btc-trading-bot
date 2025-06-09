@@ -1,11 +1,13 @@
 import argparse
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Tuple
+from datetime import datetime
+from typing import Any, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+from strategies.ema_rsi_trend import evaluar_estrategia
 
 # Hacer seaborn opcional
 try:
@@ -24,7 +26,6 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 # Importar la estrategia
-from strategies.ema_rsi_trend import evaluar_estrategia
 
 # Configurar logging
 logging.basicConfig(
@@ -102,7 +103,7 @@ class EMARSITrendBacktest:
             50, len(df)
         ):  # Empezamos después de tener suficientes datos para los indicadores
             current_row = df.iloc[i]
-            prev_row = df.iloc[i - 1]
+            df.iloc[i - 1]
             current_date = current_row["Fecha"]
             current_price = current_row["Precio USD"]
 
@@ -177,7 +178,11 @@ class EMARSITrendBacktest:
         self.capital -= trade["commission"]
 
         logger.info(
-            f"{date.date()} - {'Compra' if signal == 'BUY' else 'Venta'} de {position_size:.6f} BTC a ${price:.2f}"
+            "%s - %s de %.6f BTC a $%.2f",
+            date.date(),
+            "Compra" if signal == "BUY" else "Venta",
+            position_size,
+            price,
         )
 
     def _close_position(self, date: pd.Timestamp, price: float, reason: str):
@@ -372,7 +377,9 @@ def load_historical_data(
             )
 
         logger.info(
-            f"Datos cargados correctamente. Rango de fechas: {df['Fecha'].min()} a {df['Fecha'].max()}"
+            "Datos cargados correctamente. Rango de fechas: %s a %s",
+            df["Fecha"].min(),
+            df["Fecha"].max(),
         )
 
         return df
@@ -496,23 +503,22 @@ def print_results(metrics: Dict[str, Any], df: pd.DataFrame, params: Dict[str, A
 
         # Imprimir encabezado
         print("\n" + "=" * 60)
-        print(f"RESULTADOS DEL BACKTEST".center(60))
+        print("RESULTADOS DEL BACKTEST".center(60))
         print("=" * 60)
-        print(
-            f"Período: {df['Fecha'].iloc[0].strftime('%Y-%m-%d')} a {df['Fecha'].iloc[-1].strftime('%Y-%m-%d')}"
-        )
+        period_start = df["Fecha"].iloc[0].strftime("%Y-%m-%d")
+        period_end = df["Fecha"].iloc[-1].strftime("%Y-%m-%d")
+        print(f"Período: {period_start} a {period_end}")
         print(f"Días de trading: {days}")
 
         # Imprimir métricas
         print(f"\n{'MÉTRICA':<25} {'ESTRATEGIA':<15} {'HOLDEAR':<15}")
         print("-" * 60)
         print(f"{'Capital Inicial:':<25} {format_currency(metrics['initial_capital'])}")
-        print(
-            f"{'Capital Final:':<25} {format_currency(metrics['final_capital'])} {format_currency(initial_price * (1 + hold_return/100))}"
-        )
-        print(
-            f"{'Retorno Total (%):':<25} {metrics['total_return']:>5.1f}% {hold_return:>14.1f}%"
-        )
+        final_capital_str = format_currency(metrics["final_capital"])
+        hold_final = format_currency(initial_price * (1 + hold_return / 100))
+        print(f"{'Capital Final:':<25} {final_capital_str} {hold_final}")
+        total_ret = metrics["total_return"]
+        print(f"{'Retorno Total (%):':<25} {total_ret:>5.1f}% {hold_return:>14.1f}%")
         print(f"{'CAGR (%):':<25} {metrics['cagr']:>5.1f}% {hold_cagr:>14.1f}%")
         print(f"{'Máximo Drawdown (%):':<25} {metrics['max_drawdown']:>5.1f}%")
         print(f"{'Operaciones:':<25} {metrics['total_trades']:>5}")
@@ -541,8 +547,9 @@ def print_results(metrics: Dict[str, Any], df: pd.DataFrame, params: Dict[str, A
             print("-" * 60)
             for trade in trades[-5:]:
                 if trade["type"] == "CLOSE":
+                    date_str = trade["date"].strftime("%Y-%m-%d")
                     print(
-                        f"{trade['date'].strftime('%Y-%m-%d')} {trade['position_type']:<6} "
+                        f"{date_str} {trade['position_type']:<6} "
                         f"${trade['price']:,.2f} {trade.get('pnl_pct', 0):>6.1f}%  "
                         f"${trade.get('capital', 0):,.2f}"
                     )
@@ -629,14 +636,19 @@ def main():
         logger.info(f"Capital inicial: ${args.initial_capital:,.2f}")
         logger.info(f"Apalancamiento: {args.leverage}x")
         logger.info(
-            f"Stop Loss: {args.stop_loss*100:.1f}%, Take Profit: {args.take_profit*100:.1f}%"
+            "Stop Loss: %.1f%%, Take Profit: %.1f%%",
+            args.stop_loss * 100,
+            args.take_profit * 100,
         )
         logger.info(f"Comisión: {args.commission*100:.2f}%")
         logger.info("-" * 60)
-        logger.info(f"Parámetros de la estrategia:")
+        logger.info("Parámetros de la estrategia:")
         logger.info(f"  EMAs: {args.ema_fast}/{args.ema_medium}/{args.ema_slow}")
         logger.info(
-            f"  RSI: Período={args.rsi_period}, Niveles={args.rsi_oversold}/{args.rsi_overbought}"
+            "  RSI: Período=%s, Niveles=%s/%s",
+            args.rsi_period,
+            args.rsi_oversold,
+            args.rsi_overbought,
         )
         logger.info("=" * 60)
 

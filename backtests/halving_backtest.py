@@ -1,24 +1,24 @@
-import os
-import sys
-from pathlib import Path
-
-# Asegurarse de que el directorio raíz del proyecto esté en el path
-project_root = Path(__file__).parent.parent
-sys.path.append(str(project_root))
-
 import logging
-from datetime import datetime, timedelta
+import sys
+from datetime import datetime
 from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
 from sqlalchemy.orm import sessionmaker
 
-# Importaciones locales
 from config import DATABASE_URL
 from storage.database import get_price_history_df, init_db, init_engine
 from strategies.halving_strategy import estimate_block_height, evaluar_estrategia
+
+# Asegurarse de que el directorio raíz del proyecto esté en el path
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root))
+
+
+# Importaciones locales
 
 # Configurar logging
 logging.basicConfig(
@@ -48,11 +48,11 @@ def calculate_funding_cost(
 def run_backtest(
     coin_id: str,
     initial_capital: float = 10000.0,
-    start_date: str = "2012-01-01",  # Fecha inicial por defecto para cubrir varios ciclos
-    leverage: float = 3.0,  # Menor apalancamiento por defecto para estrategia a largo plazo
+    start_date: str = "2012-01-01",  # Fecha inicial para cubrir varios ciclos
+    leverage: float = 3.0,  # Menor apalancamiento para largo plazo
     funding_rate: float = 0.01,
-    stop_loss: float = 0.10,  # Stop loss más amplio para estrategia de largo plazo
-    take_profit: float = 0.30,  # Take profit más amplio
+    stop_loss: float = 0.10,  # Stop loss amplio
+    take_profit: float = 0.30,  # Take profit amplio
 ) -> dict:
     """
     Ejecuta el backtest de la estrategia de halving y S2F.
@@ -152,7 +152,7 @@ def run_backtest(
             position_type = PositionType.LONG
             entry_price = current_price
 
-            # Usar el tamaño de posición calculado por la estrategia o un valor por defecto
+            # Usar el tamaño calculado por la estrategia o un valor por defecto
             position_size = capital * leverage
 
             # Registrar la operación
@@ -349,6 +349,7 @@ def plot_results(results: Dict[str, Any], save_path: str = None) -> None:
             if trade["type"] == "OPEN":
                 marker = "^" if trade["position_type"] == "LONG" else "v"
                 color = "g" if trade["position_type"] == "LONG" else "r"
+                label = "Compra" if trade["position_type"] == "LONG" else "Venta"
                 ax1.scatter(
                     trade["date"],
                     norm_equity[dates.index(trade["date"])],
@@ -356,7 +357,7 @@ def plot_results(results: Dict[str, Any], save_path: str = None) -> None:
                     marker=marker,
                     s=100,
                     zorder=5,
-                    label=f"{'Compra' if trade['position_type'] == 'LONG' else 'Venta'}",
+                    label=label,
                 )
 
         ax1.set_title(
@@ -454,19 +455,17 @@ def backtest(
     print("\n" + "=" * 60)
     print("RESULTADOS DEL BACKTEST".center(60))
     print("=" * 60)
-    print(
-        f"Período: {results['dates'][0].strftime('%Y-%m-%d')} a {results['dates'][-1].strftime('%Y-%m-%d')}"
-    )
+    period_start = results["dates"][0].strftime("%Y-%m-%d")
+    period_end = results["dates"][-1].strftime("%Y-%m-%d")
+    print(f"Período: {period_start} a {period_end}")
     print(f"Días de trading: {days}")
     print(f"\n{'MÉTRICA':<25} {'ESTRATEGIA':<15} {'HOLDEAR':<15}")
     print("-" * 60)
     print(f"{'Capital Inicial:':<25} ${results['initial_capital']:,.2f}")
-    print(
-        f"{'Capital Final:':<25} ${results['final_capital']:,.2f} ${initial_price + (initial_price * hold_return/100):,.2f}"
-    )
-    print(
-        f"{'Retorno Total (%):':<25} {results['total_return_pct']:>5.1f}% {hold_return:>14.1f}%"
-    )
+    hold_final = initial_price + (initial_price * hold_return / 100)
+    print(f"{'Capital Final:':<25} ${results['final_capital']:,.2f} {hold_final:,.2f}")
+    total_pct = results["total_return_pct"]
+    print(f"{'Retorno Total (%):':<25} {total_pct:>5.1f}% {hold_return:>14.1f}%")
     print(f"{'CAGR (%):':<25} {results['cagr_pct']:>5.1f}% {hold_cagr:>14.1f}%")
     print(f"{'Máximo Drawdown (%):':<25} {results['max_drawdown_pct']:>5.1f}%")
     print(f"{'Operaciones:':<25} {results['total_trades']:>5}")

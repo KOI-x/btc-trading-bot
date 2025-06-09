@@ -1,12 +1,11 @@
 import argparse
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 # Añadir el directorio raíz al path para importar módulos
@@ -192,7 +191,12 @@ class BTCAccumulationBacktest:
         }
         self.trades.append(trade)
         logger.info(
-            f"{date} - COMPRA: {btc_bought:.8f} BTC a ${price:,.2f} (${position_size:,.2f} + ${commission:.2f} comisión)"
+            "%s - COMPRA: %.8f BTC a $%.2f ($%.2f + $%.2f comisión)",
+            date,
+            btc_bought,
+            price,
+            position_size,
+            commission,
         )
 
         return True
@@ -239,7 +243,7 @@ class BTCAccumulationBacktest:
         # Calcular métricas finales
         final_price = df.iloc[-1]["Precio USD"]
         total_equity = self.usd_balance + (self.btc_balance * final_price)
-        btc_value = self.btc_balance * final_price
+        self.btc_balance * final_price
 
         # Retorno en USD y BTC
         usd_return = ((total_equity / self.initial_usd) - 1) * 100
@@ -376,7 +380,11 @@ def optimize_parameters(
 
             if i % 10 == 0 or i == total_combinations:
                 logger.info(
-                    f"Progreso: {i}/{total_combinations} | Mejor BTC: {best_btc:.4f} | Sharpe: {best_sharpe:.2f}"
+                    "Progreso: %s/%s | Mejor BTC: %.4f | Sharpe: %.2f",
+                    i,
+                    total_combinations,
+                    best_btc,
+                    best_sharpe,
                 )
 
         except Exception as e:
@@ -522,7 +530,10 @@ def main():
             )
 
         logger.info(
-            f"Datos cargados: {df['Fecha'].min()} a {df['Fecha'].max()} ({len(df)} días)"
+            "Datos cargados: %s a %s (%s días)",
+            df["Fecha"].min(),
+            df["Fecha"].max(),
+            len(df),
         )
 
         if args.optimize:
@@ -531,7 +542,7 @@ def main():
                 df, args.initial_usd, args.commission
             )
 
-            # Preguntar al usuario si desea ejecutar el backtest con los mejores parámetros
+            # Preguntar si se desea ejecutar el backtest con los mejores parámetros
             if (
                 input(
                     "\n¿Desea ejecutar el backtest con los mejores parámetros? (s/n): "
@@ -570,9 +581,9 @@ def main():
         print("\n" + "=" * 60)
         print("RESULTADOS DEL BACKTEST".center(60))
         print("=" * 60)
-        print(
-            f"Período: {df['Fecha'].iloc[0].strftime('%Y-%m-%d')} a {df['Fecha'].iloc[-1].strftime('%Y-%m-%d')}"
-        )
+        period_start = df["Fecha"].iloc[0].strftime("%Y-%m-%d")
+        period_end = df["Fecha"].iloc[-1].strftime("%Y-%m-%d")
+        print(f"Período: {period_start} a {period_end}")
         print(f"Días de trading: {len(df)}")
         print("\n" + "-" * 60)
         print(f"{'Capital Inicial (USD):':<30} ${args.initial_usd:,.2f}")
@@ -584,17 +595,15 @@ def main():
         print(f"{'Valor en BTC:':<30} ${strategy_value:,.2f}")
         print("\n" + "-" * 60)
         print(f"{'Retorno Total (USD):':<30} {results['usd_return']:,.1f}%")
-        print(
-            f"{'Retorno HOLD (USD):':<30} {(hold_value/args.initial_usd-1)*100:,.1f}%"
-        )
+        ret_hold = (hold_value / args.initial_usd - 1) * 100
+        print(f"{'Retorno HOLD (USD):':<30} {ret_hold:,.1f}%")
         print(f"{'Retorno Total (BTC):':<30} {results['btc_return']:,.1f}%")
         print(f"{'Máximo Drawdown:':<30} {results['max_drawdown']:,.1f}%")
         print("\n" + "-" * 60)
         print(f"{'Precio Inicial BTC:':<30} ${df.iloc[0]['Precio USD']:,.2f}")
         print(f"{'Precio Final BTC:':<30} ${btc_price:,.2f}")
-        print(
-            f"{'Variación Precio:':<30} {(btc_price/df.iloc[0]['Precio USD']-1)*100:,.1f}%"
-        )
+        price_change = (btc_price / df.iloc[0]["Precio USD"] - 1) * 100
+        print(f"{'Variación Precio:':<30} {price_change:,.1f}%")
         print("=" * 60 + "\n")
 
         # Mostrar resumen de operaciones
@@ -623,14 +632,18 @@ def main():
 
             print("\n" + "OPERACIONES POR AÑO".center(60))
             print("-" * 60)
-            print(
-                f"{'Año':<6} {'Operaciones':>12} {'BTC Acum.':>12} {'Invertido (USD)':>15} {'Comisión (USD)':>15}"
+            header = (
+                f"{'Año':<6} {'Operaciones':>12} {'BTC Acum.':>12}"
+                f" {'Invertido (USD)':>15} {'Comisión (USD)':>15}"
             )
+            print(header)
             print("-" * 60)
             for year, data in yearly.iterrows():
-                print(
-                    f"{year:<6} {data['trades']:>12} {data['btc_amount']:>12.8f} {data['usd_amount']:>15,.2f} {data['commission']:>15,.2f}"
+                row = (
+                    f"{year:<6} {data['trades']:>12} {data['btc_amount']:>12.8f}"
+                    f" {data['usd_amount']:>15,.2f} {data['commission']:>15,.2f}"
                 )
+                print(row)
 
         # Generar gráficos
         plot_results(results)

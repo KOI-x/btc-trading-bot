@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Dict, Tuple
 
-import numpy as np
 import pandas as pd
 
 # Configurar logging
@@ -141,9 +140,12 @@ def get_technical_indicators(df: pd.DataFrame, params: Dict[str, Any]) -> pd.Dat
 
 
 def evaluar_estrategia_avanzada(
-    df: pd.DataFrame, capital: float, params: Dict[str, Any] = None
+    df: pd.DataFrame,
+    capital: float,
+    params: Dict[str, Any] = None,
 ) -> dict:
-    """Estrategia mejorada que combina el ciclo de halving, S2F e indicadores técnicos."""
+    """Estrategia mejorada que combina el ciclo de halving,
+    S2F e indicadores técnicos."""
     default_params = {
         "max_leverage": 3.0,
         "risk_per_trade": 0.02,
@@ -182,7 +184,6 @@ def evaluar_estrategia_avanzada(
 
         volume_ok = df["Volumen"].iloc[-1] > (df["VOL_MA"].iloc[-1] * 1.5)
 
-        s2f_signal = False
         s2f_ratio = None
         s2f_deviation = 0
 
@@ -190,7 +191,7 @@ def evaluar_estrategia_avanzada(
             s2f_ratio = calculate_s2f_ratio(params["block_height"])
             price_s2f_model = 0.4 * (s2f_ratio**3)
             s2f_deviation = (current_price - price_s2f_model) / price_s2f_model
-            s2f_signal = s2f_deviation < params["s2f_threshold"]
+            s2f_deviation < params["s2f_threshold"]
 
         signal = "HOLD"
 
