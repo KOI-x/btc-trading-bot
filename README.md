@@ -219,3 +219,141 @@ npm run dev
 
 Esto inicia el servidor en `http://localhost:5173` y permite interactuar con los
 endpoints del backend.
+
+## Estrategia de Acumulación de BTC
+
+### Resumen de la Estrategia
+
+Estrategia de acumulación de Bitcoin que utiliza indicadores técnicos para identificar oportunidades de compra en condiciones de sobreventa, con el objetivo de maximizar la cantidad de BTC acumulados a largo plazo.
+
+### Características Principales
+
+- **Enfoque en acumulación** de BTC en lugar de ganancias en USD
+- **Señales de compra** basadas en RSI y Bandas de Bollinger
+- **Gestión de riesgo** con tamaño de posición dinámico
+- **Optimizada** para maximizar la acumulación de BTC
+
+## Resultados del Backtest (2020-2025)
+
+### Métricas Clave
+
+| Métrica | Valor |
+|---------|-------|
+| BTC Acumulados | 1.7963 BTC |
+| Retorno (USD) | -2.7% |
+| Retorno (BTC) | +38.5% |
+| Retorno HOLD (USD) | -23.7% |
+| Máximo Drawdown | 35.3% |
+| Ratio de Sharpe | 0.04 |
+| Operaciones Totales | 66 |
+| Comisiones Totales | $9.98 |
+
+### Comparación con HOLD
+
+- **+27.3% más BTC** que la estrategia HOLD (1.4108 BTC)
+- **+21% mejor rendimiento en USD** que HOLD
+- Menor volatilidad que el mercado
+
+### Gráfico de Resultados
+
+![BTC Accumulation Results](btc_accumulation_results.png)
+
+## Parámetros Óptimos
+
+```python
+{
+    'rsi_oversold': 30,
+    'bollinger_oversold': 0.08,  # 8% por debajo de la banda inferior
+    'atr_multiplier': 3.0,      # Multiplicador para el stop loss dinámico
+    'risk_per_trade': 0.005,    # 0.5% de riesgo por operación
+    'min_rsi': 30,              # RSI mínimo para considerar compra
+    'trend_filter': False       # Sin filtro de tendencia
+}
+```
+
+## Instalación
+
+1. Clona el repositorio:
+```bash
+git clone https://github.com/tu-usuario/btc-trading-bot.git
+cd btc-trading-bot
+```
+
+2. Crea y activa un entorno virtual (recomendado):
+```bash
+python -m venv venv
+.\venv\Scripts\activate  # Windows
+source venv/bin/activate  # Linux/Mac
+```
+
+3. Instala las dependencias:
+```bash
+pip install -r requirements.txt
+```
+
+## Ejecución en Producción
+
+### 1. Configuración
+
+Crea un archivo `.env` en la raíz del proyecto con tus credenciales de intercambio:
+
+```env
+EXCHANGE_API_KEY=tu_api_key
+EXCHANGE_SECRET=tu_api_secret
+```
+
+### 2. Ejecutar en Producción
+
+Para ejecutar la estrategia en producción con Binance:
+
+```bash
+python -m strategies.btc_accumulation_live --exchange binance --symbol BTC/USDT --initial-usd 1000
+```
+
+### 3. Monitoreo
+
+La estrategia registrará todas las operaciones en `logs/btc_accumulation.log` y generará informes periódicos.
+
+## Monitoreo y Análisis
+
+### Archivos de Salida
+
+- `logs/btc_accumulation.log`: Registro detallado de operaciones
+- `results/`: Directorio con resultados históricos y gráficos
+- `data/`: Datos históricos descargados
+
+### Métricas en Tiempo Real
+
+La estrategia monitorea en tiempo real:
+- Saldo en USD y BTC
+- Rendimiento actual
+- Drawdown actual
+- Últimas operaciones
+
+## Documentación Adicional
+
+### Estrategia
+
+- **Señal de Compra**:
+  - RSI < 30 (sobreventa)
+  - Precio < Banda Inferior de Bollinger - 8%
+  - Sin filtro de tendencia para mayor flexibilidad
+
+- **Tamaño de Posición**:
+  - 0.5% de riesgo por operación
+  - Stop loss dinámico basado en ATR (3x ATR)
+
+### Gestión de Riesgo
+
+- Riesgo máximo por operación: 0.5% del capital
+- Sin apalancamiento
+- Stop loss obligatorio en cada operación
+- Sin short selling
+
+## Contribuciones
+
+Las contribuciones son bienvenidas. Por favor, abre un issue primero para discutir los cambios propuestos.
+
+## Licencia
+
+MIT

@@ -1,38 +1,124 @@
+import logging
+from typing import Any, Dict, Tuple
+
+import numpy as np
 import pandas as pd
 
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
-def evaluar_estrategia(df: pd.DataFrame) -> str:
-    """Evalúa una estrategia basada en EMAs y desviación S2F.
 
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        DataFrame con columnas "Fecha", "Precio USD", "Variación %", "Desviación S2F %".
+def evaluar_estrategia(df: pd.DataFrame, params: Dict[str, Any] = None) -> str:
+    """Evalúa una estrategia mejorada basada en múltiples EMAs y condiciones de tendencia.
 
-    Returns
-    -------
-    str
-        'BUY', 'SELL' o 'HOLD' según las condiciones.
+    Parámetros:
+        df: DataFrame con columnas ["Fecha", "Precio USD", "Variación %"]
+        params: Diccionario con parámetros personalizables de la estrategia
+
+    Retorna:
+        str: 'BUY', 'SELL' o 'HOLD' según las condiciones
     """
-    if df is None or df.empty or "Precio USD" not in df.columns:
+    # Parámetros por defecto
+    default_params = {
+        "ema_fast": 10,
+        "ema_medium": 21,
+        "ema_slow": 50,
+        "rsi_period": 14,
+        "rsi_overbought": 70,
+        "rsi_oversold": 30,
+        "volume_ma": 20,
+        "min_volume_multiplier": 1.5,
+    }
+
+    # Combinar parámetros por defecto con los proporcionados
+    params = {**default_params, **(params or {})}
+
+    # Validar datos de entrada
+    if df is None or df.empty or len(df) < params["ema_slow"]:
+        logger.warning("Datos insuficientes para el análisis")
         return "HOLD"
 
-    ema10 = df["Precio USD"].ewm(span=10, adjust=False).mean()
-    ema50 = df["Precio USD"].ewm(span=50, adjust=False).mean()
+    try:
+        # Hacer una copia para no modificar el original
+        df = df.copy()
 
-    if len(ema10) < 2 or len(ema50) < 2:
+        # Calcular EMAs
+        df["EMA_FAST"] = (
+            df["Precio USD"].ewm(span=params["ema_fast"], adjust=False).mean()
+        )
+        df["EMA_MED"] = (
+            df["Precio USD"].ewm(span=params["ema_medium"], adjust=False).mean()
+        )
+        df["EMA_SLOW"] = (
+            df["Precio USD"].ewm(span=params["ema_slow"], adjust=False).mean()
+        )
+
+        # Calcular RSI
+        delta = df["Precio USD"].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=params["rsi_period"]).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=params["rsi_period"]).mean()
+        rs = gain / loss
+        df["RSI"] = 100 - (100 / (1 + rs))
+
+        # Calcular volumen promedio
+        if "Volumen" in df.columns:
+            df["VOL_MA"] = df["Volumen"].rolling(window=params["volume_ma"]).mean()
+            volume_ok = df["Volumen"].iloc[-1] > (
+                df["VOL_MA"].iloc[-1] * params["min_volume_multiplier"]
+            )
+        else:
+            volume_ok = True  # Si no hay datos de volumen, ignorar esta condición
+
+        # Obtener valores actuales
+        current = df.iloc[-1]
+        prev = df.iloc[-2]
+
+        # Condiciones de compra
+        buy_conditions = [
+            current["EMA_FAST"] > current["EMA_MED"],  # EMA rápida sobre la media
+            current["EMA_MED"] > current["EMA_SLOW"],  # EMA media sobre la lenta
+            current["RSI"] < params["rsi_overbought"],  # RSI no sobrecomprado
+            volume_ok,  # Volumen por encima del promedio
+        ]
+
+        # Condiciones de venta
+        sell_conditions = [
+            current["EMA_FAST"] < current["EMA_MED"],  # EMA rápida bajo la media
+            current["EMA_MED"] < current["EMA_SLOW"],  # EMA media bajo la lenta
+            current["RSI"] > params["rsi_oversold"],  # RSI no sobrevendido
+            volume_ok,  # Volumen por encima del promedio
+        ]
+
+        # Verificar cruces recientes para mayor sensibilidad
+        fast_cross_above_med = (prev["EMA_FAST"] <= prev["EMA_MED"]) and (
+            current["EMA_FAST"] > current["EMA_MED"]
+        )
+        fast_cross_below_med = (prev["EMA_FAST"] >= prev["EMA_MED"]) and (
+            current["EMA_FAST"] < current["EMA_MED"]
+        )
+
+        # Generar señales
+        if all(buy_conditions) or (
+            fast_cross_above_med and current["EMA_MED"] > current["EMA_SLOW"]
+        ):
+            logger.info(
+                "SEÑAL DE COMPRA - Tendencias alcistas y condiciones favorables"
+            )
+            return "BUY"
+
+        elif all(sell_conditions) or (
+            fast_cross_below_med and current["EMA_MED"] < current["EMA_SLOW"]
+        ):
+            logger.info("SEÑAL DE VENTA - Tendencias bajistas y condiciones favorables")
+            return "SELL"
+
+        # Si no hay señales claras, mantener posición actual
+        logger.info("Sin señales de operación claras")
         return "HOLD"
 
-    prev_ema10, last_ema10 = ema10.iloc[-2], ema10.iloc[-1]
-    prev_ema50, last_ema50 = ema50.iloc[-2], ema50.iloc[-1]
-
-    cross_up = prev_ema10 <= prev_ema50 and last_ema10 > last_ema50
-    cross_down = prev_ema10 >= prev_ema50 and last_ema10 < last_ema50
-
-    desviacion = df["Desviación S2F %"].iloc[-1]
-
-    if cross_up and desviacion < 0:
-        return "BUY"
-    if cross_down and desviacion > 0:
-        return "SELL"
-    return "HOLD"
+    except Exception as e:
+        logger.error(f"Error en la estrategia: {str(e)}", exc_info=True)
+        return "HOLD"
