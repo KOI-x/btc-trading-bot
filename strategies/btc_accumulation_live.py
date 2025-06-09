@@ -9,7 +9,7 @@ import argparse
 import logging
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 import ccxt
@@ -206,7 +206,6 @@ class BTCAccumulationStrategy:
             price = self.exchange.fetch_ticker(symbol)["ask"]
 
             # Calcular cantidad con precisión correcta
-            market = self.exchange.market(symbol)
             amount = float(self.exchange.amount_to_precision(symbol, amount))
 
             if amount <= 0:
@@ -222,8 +221,9 @@ class BTCAccumulationStrategy:
             self.simulated_balance["USDT"] -= cost
             self.simulated_balance["BTC"] += amount
             logger.info(
-                f"[SIMULACIÓN] Saldo actualizado - USD: ${self.simulated_balance['USDT']:.2f}, "
-                f"BTC: {self.simulated_balance['BTC']:.8f}"
+                "[SIMULACIÓN] Saldo actualizado - USD: $%.2f, BTC: %.8f",
+                self.simulated_balance["USDT"],
+                self.simulated_balance["BTC"],
             )
 
             # Simular orden para pruebas
@@ -301,7 +301,7 @@ class BTCAccumulationStrategy:
 
         # Mostrar estado
         print("\n" + "=" * 80)
-        print(f"ESTRATEGIA DE ACUMULACIÓN DE BTC - MODO SIMULACIÓN")
+        print("ESTRATEGIA DE ACUMULACIÓN DE BTC - MODO SIMULACIÓN")
         print("=" * 80)
         print(f"Exchange: {self.exchange.id.upper()}")
         print(f"Par: {self.symbol}")
