@@ -1,7 +1,8 @@
-import pandas as pd
 import logging
+from typing import Any, Dict, Tuple
+
 import numpy as np
-from typing import Tuple, Dict, Any
+import pandas as pd
 
 # Configurar logging
 logging.basicConfig(

@@ -6,18 +6,19 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.append(str(project_root))
 
-import pandas as pd
-import numpy as np
 import logging
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import List, Dict, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
 from sqlalchemy.orm import sessionmaker
 
 # Importaciones locales
 from config import DATABASE_URL
 from storage.database import get_price_history_df, init_db, init_engine
-from strategies.halving_strategy import evaluar_estrategia, estimate_block_height
+from strategies.halving_strategy import estimate_block_height, evaluar_estrategia
 
 # Configurar logging
 logging.basicConfig(
@@ -293,8 +294,8 @@ def run_backtest(
 def plot_results(results: Dict[str, Any], save_path: str = None) -> None:
     """Grafica los resultados del backtest."""
     try:
-        import matplotlib.pyplot as plt
         import matplotlib.dates as mdates
+        import matplotlib.pyplot as plt
         from matplotlib.gridspec import GridSpec
 
         # Configurar el estilo de los gráficos sin depender de estilos externos

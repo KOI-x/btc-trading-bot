@@ -1,8 +1,8 @@
+import logging
 import os
 import sys
-from pathlib import Path
-import logging
 from datetime import datetime, timedelta
+from pathlib import Path
 
 # Configurar logging
 logging.basicConfig(
@@ -43,7 +43,7 @@ def setup_directories():
 def initialize_database():
     """Inicializar la base de datos SQLite."""
     from config import DATABASE_URL
-    from storage.database import init_engine, init_db
+    from storage.database import init_db, init_engine
 
     try:
         engine = init_engine(DATABASE_URL)
