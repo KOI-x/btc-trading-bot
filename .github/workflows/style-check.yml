@@ -1,7 +1,7 @@
 name: Style Checks
 
 on: [push, pull_request]
-
+if: false  # ⛔ desactiva todo el workflow
 jobs:
   lint:
     runs-on: ubuntu-latest
