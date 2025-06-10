@@ -19,22 +19,27 @@ from monthly_injection_runner import (  # noqa: E402
 )
 
 
-def simple_dca(df: pd.DataFrame, deposits: List[float]) -> float:
-    """Simulate buying BTC each month with the given deposits."""
+def simple_dca(
+    df: pd.DataFrame, deposits: List[float], initial_usd: float = 0.0
+) -> float:
+    """Simulate buying BTC on the first day of each month with equal capital."""
+
     if df.empty:
         return 0.0
+
     btc_balance = 0.0
-    current_month = df.iloc[0]["Fecha"].month
     deposit_idx = 0
-    if deposits:
-        btc_balance += deposits[0] / df.iloc[0]["Precio USD"]
+
     for _, row in df.iterrows():
-        month = row["Fecha"].month
-        if month != current_month:
-            current_month = month
-            deposit_idx += 1
+        if row["Fecha"].day == 1:
+            amount = 0.0
+            if deposit_idx == 0 and initial_usd > 0:
+                amount += initial_usd
             if deposit_idx < len(deposits):
-                btc_balance += deposits[deposit_idx] / row["Precio USD"]
+                amount += deposits[deposit_idx]
+            deposit_idx += 1
+            if amount > 0:
+                btc_balance += amount / row["Precio USD"]
     return btc_balance
 
 
@@ -53,6 +58,7 @@ def evaluate_period(
     months: int,
     deposits: List[float],
     params: Dict[str, Any],
+    initial_usd: float,
 ) -> Dict[str, Any]:
     df_all = load_historical_data()
     start_dt = pd.to_datetime(start)
@@ -60,9 +66,9 @@ def evaluate_period(
     df = df_all[(df_all["Fecha"] >= start_dt) & (df_all["Fecha"] <= end_dt)]
     if df.empty:
         raise ValueError("No hay datos para el periodo solicitado")
-    backtest = MonthlyInjectionBacktest(initial_usd=0)
+    backtest = MonthlyInjectionBacktest(initial_usd=initial_usd)
     result = backtest.run(df, params, deposits)
-    dca_btc = simple_dca(df, deposits)
+    dca_btc = simple_dca(df, deposits, initial_usd)
     final_price = result["final_price"]
     return {
         "periodo": start_dt.strftime("%Y-%m"),
@@ -82,6 +88,7 @@ def main() -> None:
     )
     parser.add_argument("--start-dates", nargs="+", required=True)
     parser.add_argument("--months", type=int, default=24)
+    parser.add_argument("--initial-usd", type=float, default=0.0)
     parser.add_argument("--monthly", nargs="*", type=float, default=[])
     args = parser.parse_args()
 
@@ -97,7 +104,11 @@ def main() -> None:
     rows = []
     for start in args.start_dates:
         try:
-            rows.append(evaluate_period(start, args.months, args.monthly, params))
+            rows.append(
+                evaluate_period(
+                    start, args.months, args.monthly, params, args.initial_usd
+                )
+            )
         except ValueError as exc:
             print(f"Periodo {start} sin datos: {exc}")
 

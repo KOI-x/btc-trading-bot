@@ -28,24 +28,26 @@ class MonthlyInjectionBacktest(BTCAccumulationBacktest):
         params: Dict[str, Any] | None = None,
         monthly_deposits: List[float] | None = None,
     ) -> Dict[str, Any]:
+        """Execute the backtest injecting capital on the first day of each month."""
+
         self.reset()
+        # Postpone initial capital deployment until the first monthly injection
+        self.usd_balance = 0.0
         df = self.calculate_indicators(df)
         df = df.dropna().reset_index(drop=True)
         deposits = monthly_deposits or []
-        current_month = df.iloc[0]["Fecha"].month
         deposit_idx = 0
-        if deposits:
-            self.usd_balance += deposits[0]
-            self.total_invested += deposits[0]
+
         for _, row in df.iterrows():
-            month = row["Fecha"].month
-            if month != current_month:
-                current_month = month
-                deposit_idx += 1
+            if row["Fecha"].day == 1:
+                if deposit_idx == 0 and self.initial_usd > 0:
+                    self.usd_balance += self.initial_usd
+                    self.total_invested += self.initial_usd
                 if deposit_idx < len(deposits):
                     amt = deposits[deposit_idx]
                     self.usd_balance += amt
                     self.total_invested += amt
+                deposit_idx += 1
             self.current_price = row["Precio USD"]
             should_buy, _ = self.get_buy_conditions(row, params or {})
             if should_buy and self.usd_balance > 10:
@@ -68,15 +70,14 @@ class MonthlyInjectionBacktest(BTCAccumulationBacktest):
         final_price = df.iloc[-1]["Precio USD"]
         total_equity = self.usd_balance + (self.btc_balance * final_price)
 
-        if self.initial_usd > 0:
-            usd_return = ((total_equity / self.initial_usd) - 1) * 100
+        invested = self.total_invested
+        if invested > 0:
+            usd_return = ((total_equity / invested) - 1) * 100
+            btc_return = (
+                (self.btc_balance / (invested / df.iloc[0]["Precio USD"])) - 1
+            ) * 100
         else:
             usd_return = 0
-
-        btc_start = self.initial_usd / df.iloc[0]["Precio USD"]
-        if btc_start > 0:
-            btc_return = ((self.btc_balance / btc_start) - 1) * 100
-        else:
             btc_return = 0
         equity_curve = pd.DataFrame(self.equity_curve)
         equity_curve["peak"] = equity_curve["total_equity"].cummax()
@@ -92,9 +93,11 @@ class MonthlyInjectionBacktest(BTCAccumulationBacktest):
             "btc_return": btc_return,
             "max_drawdown": abs(max_drawdown),
             "trades": self.trades,
+            "last_purchase": self.trades[-1]["date"] if self.trades else None,
             "signals_triggered": len(self.trades),
             "equity_curve": equity_curve,
             "final_price": final_price,
+            "total_invested": invested,
         }
 
 
