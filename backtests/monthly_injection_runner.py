@@ -1,4 +1,5 @@
 """Execute BTCAccumulationBacktest with monthly capital injections."""
+
 from __future__ import annotations
 
 import sys
@@ -7,10 +8,9 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))  # noqa: E402
 
 import argparse  # noqa: E402
-from typing import Dict, List, Any  # noqa: E402
+from typing import Any, Dict, List  # noqa: E402
 
 import pandas as pd  # noqa: E402
-
 from btc_accumulation_backtest import (  # noqa: E402
     BTCAccumulationBacktest,
     load_historical_data,
@@ -19,6 +19,7 @@ from btc_accumulation_backtest import (  # noqa: E402
 
 class MonthlyInjectionBacktest(BTCAccumulationBacktest):
     """Backtest que inyecta capital al inicio de cada mes."""
+
     def run(
         self,
         df: pd.DataFrame,
@@ -47,18 +48,21 @@ class MonthlyInjectionBacktest(BTCAccumulationBacktest):
             should_buy, _ = self.get_buy_conditions(row, params or {})
             if should_buy and self.usd_balance > 10:
                 position_size = self.calculate_position_size(
-                    row["Precio USD"], row["ATR"], row["RSI"], row["Dist_Soporte"])
+                    row["Precio USD"], row["ATR"], row["RSI"], row["Dist_Soporte"]
+                )
                 if position_size > 0:
                     self.execute_buy(row["Fecha"], row["Precio USD"], row["ATR"])
             total_equity = self.usd_balance + (self.btc_balance * row["Precio USD"])
-            self.equity_curve.append({
-                "date": row["Fecha"],
-                "usd_balance": self.usd_balance,
-                "btc_balance": self.btc_balance,
-                "btc_price": row["Precio USD"],
-                "total_equity": total_equity,
-                "btc_equity": self.btc_balance,
-            })
+            self.equity_curve.append(
+                {
+                    "date": row["Fecha"],
+                    "usd_balance": self.usd_balance,
+                    "btc_balance": self.btc_balance,
+                    "btc_price": row["Precio USD"],
+                    "total_equity": total_equity,
+                    "btc_equity": self.btc_balance,
+                }
+            )
         final_price = df.iloc[-1]["Precio USD"]
         total_equity = self.usd_balance + (self.btc_balance * final_price)
         usd_return = ((total_equity / self.initial_usd) - 1) * 100

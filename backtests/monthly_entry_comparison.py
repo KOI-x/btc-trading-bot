@@ -1,14 +1,16 @@
 """Compare monthly injection strategy vs DCA across different start dates."""
+
 from __future__ import annotations
 
 import argparse
-from typing import List, Dict, Any
-from pathlib import Path
-
-import pandas as pd
 
 # Add backtests directory to path so we can import from sibling modules
 import sys
+from pathlib import Path
+from typing import Any, Dict, List
+
+import pandas as pd
+
 sys.path.append(str(Path(__file__).parent))  # noqa: E402
 
 from monthly_injection_runner import (  # noqa: E402

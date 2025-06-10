@@ -2,22 +2,21 @@ from __future__ import annotations
 
 """Run monthly injection backtest over multiple periods and compare with DCA."""
 
-from pathlib import Path
 import argparse
-from typing import List, Tuple, Dict, Any
 import sys
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
 # Add backtests directory to path so we can import sibling modules
 sys.path.append(str(Path(__file__).parent))  # noqa: E402
 
+from monthly_entry_comparison import classify_cycle, simple_dca  # noqa: E402
 from monthly_injection_runner import (  # noqa: E402
     MonthlyInjectionBacktest,
     load_historical_data,
 )
-from monthly_entry_comparison import simple_dca, classify_cycle  # noqa: E402
-
 
 DEFAULT_PERIODS: List[Tuple[str, str]] = [
     ("2017-01-01", "2018-12-31"),
