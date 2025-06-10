@@ -3,6 +3,7 @@ from __future__ import annotations
 """Run monthly injection backtest over multiple periods and compare with DCA."""
 
 import argparse
+import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -19,8 +20,10 @@ from monthly_injection_runner import (  # noqa: E402
 )
 
 DEFAULT_PERIODS: List[Tuple[str, str]] = [
+    ("2017-01-01", "2017-12-31"),
     ("2017-01-01", "2018-12-31"),
     ("2019-01-01", "2020-12-31"),
+    ("2020-03-01", "2021-03-31"),
     ("2021-01-01", "2022-12-31"),
     ("2023-01-01", "2024-06-01"),
     ("2017-01-01", "2024-06-01"),
@@ -124,7 +127,9 @@ def main() -> None:
     if not table.empty:
         print(table.to_string(index=False))
         if args.csv:
-            table.to_csv(args.csv, index=False)
+            csv_path = Path("results") / args.csv
+            os.makedirs(csv_path.parent, exist_ok=True)
+            table.to_csv(csv_path, index=False)
         if args.json:
             table.to_json(args.json, orient="records", indent=2)
 

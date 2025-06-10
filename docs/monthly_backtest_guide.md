@@ -53,4 +53,7 @@ python -m backtests.multi_period_backtest_runner \
     --csv resultados.csv
 ```
 
+El archivo se guardará automáticamente en la carpeta `results/` como
+`results/resultados.csv`.
+
 Si no indicas periodos, se probarán cinco rangos predefinidos que cubren distintos ciclos de mercado. Puedes personalizar los periodos pasando pares de fechas (`inicio fin`) al argumento `--periods`.
