@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -10,6 +11,7 @@ sys.path.append(str(Path(__file__).parent))  # noqa: E402
 import argparse  # noqa: E402
 from typing import Any, Dict, List  # noqa: E402
 
+import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 from btc_accumulation_backtest import (  # noqa: E402
     BTCAccumulationBacktest,
@@ -120,6 +122,28 @@ def main() -> None:
     print(equity.tail())
     print(f"BTC acumulado: {results['btc_accumulated']:.8f}")
     print(f"Valor final USD: ${results['final_usd']:.2f}")
+
+    plt.figure(figsize=(14, 7))
+    plt.subplot(2, 1, 1)
+    plt.plot(
+        equity["date"], equity["total_equity"], label="Valor Total (USD)", color="blue"
+    )
+    plt.title("Evolución del Valor Total (USD)")
+    plt.grid(True)
+    plt.legend()
+
+    plt.subplot(2, 1, 2)
+    plt.plot(
+        equity["date"], equity["btc_balance"], label="BTC Acumulados", color="orange"
+    )
+    plt.title("BTC Acumulados")
+    plt.grid(True)
+    plt.legend()
+
+    os.makedirs("results", exist_ok=True)
+    plt.tight_layout()
+    plt.savefig("results/monthly_injection_result.png", dpi=300, bbox_inches="tight")
+    plt.close()
 
 
 if __name__ == "__main__":
