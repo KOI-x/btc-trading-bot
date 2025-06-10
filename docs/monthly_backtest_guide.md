@@ -58,6 +58,8 @@ El archivo se guardará automáticamente en la carpeta `results/` como
 
 Si no indicas periodos, se probarán cinco rangos predefinidos que cubren distintos ciclos de mercado. Puedes personalizar los periodos pasando pares de fechas (`inicio fin`) al argumento `--periods`.
 
+Para explorar la sensibilidad de la estrategia también puedes ejecutar con `--sensitivity`, lo que calcula el retorno promedio y la ventaja frente al DCA variando el RSI (25,30,35) y el umbral de Bollinger (0.05,0.08,0.10). Si añades `--plot` se guardará un gráfico comparando cada ciclo.
+
 ### Columnas del CSV
 
 Cada periodo genera tres filas: una para la estrategia, otra para el DCA de referencia y una fila de `resumen` que compara ambas. Las columnas son:
@@ -67,6 +69,9 @@ Cada periodo genera tres filas: una para la estrategia, otra para el DCA de refe
 - `usd_invertido`: capital acumulado invertido hasta ese periodo.
 - `btc_final` y `usd_final`: saldos obtenidos al final.
 - `retorno_btc_pct` y `retorno_usd_pct`: rendimiento porcentual respecto al capital invertido.
+- `max_drawdown`: peor caída porcentual del valor total durante el periodo.
+- `tiempo_en_perdida_pct`: porcentaje de días en que el valor estuvo por debajo del capital invertido.
+- `sharpe_ratio`: relación retorno/volatilidad mensual (aproximada).
 - `señales_disparadas`: cantidad de compras ejecutadas por la estrategia.
 - `fecha_ultima_compra`: última fecha en que se realizó una operación.
 - `ventaja_pct_vs_dca`: diferencia de rendimiento en USD de la estrategia contra el DCA.

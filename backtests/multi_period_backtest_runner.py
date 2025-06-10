@@ -8,20 +8,63 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 # Add backtests directory to path so we can import sibling modules
 sys.path.append(str(Path(__file__).parent))  # noqa: E402
 
-from monthly_entry_comparison import classify_cycle, simple_dca  # noqa: E402
+from monthly_entry_comparison import classify_cycle  # noqa: E402
 from monthly_injection_runner import (  # noqa: E402
     MonthlyInjectionBacktest,
     load_historical_data,
 )
 
+
+def dca_metrics(
+    df: pd.DataFrame, deposits: List[float], initial_usd: float
+) -> Tuple[float, float, float, float]:
+    """Return final BTC and risk metrics for a DCA baseline."""
+
+    btc_balance = 0.0
+    deposit_idx = 0
+    equity: List[Dict[str, Any]] = []
+    for _, row in df.iterrows():
+        if row["Fecha"].day == 1:
+            amount = 0.0
+            if deposit_idx == 0 and initial_usd > 0:
+                amount += initial_usd
+            if deposit_idx < len(deposits):
+                amount += deposits[deposit_idx]
+            deposit_idx += 1
+            if amount > 0:
+                btc_balance += amount / row["Precio USD"]
+        total_equity = btc_balance * row["Precio USD"]
+        equity.append({"date": row["Fecha"], "total_equity": total_equity})
+
+    equity_df = pd.DataFrame(equity)
+    equity_df["peak"] = equity_df["total_equity"].cummax()
+    equity_df["drawdown"] = (equity_df["total_equity"] - equity_df["peak"]) / equity_df[
+        "peak"
+    ]
+    max_drawdown = equity_df["drawdown"].min() * 100
+    time_in_loss = (equity_df["drawdown"] < 0).mean() * 100
+    monthly_returns = (
+        equity_df.resample("M", on="date")["total_equity"].last().pct_change().dropna()
+    )
+    sharpe = (
+        (monthly_returns.mean() / monthly_returns.std()) * (12**0.5)
+        if not monthly_returns.empty
+        else 0.0
+    )
+    return btc_balance, abs(max_drawdown), time_in_loss, sharpe
+
+
 DEFAULT_PERIODS: List[Tuple[str, str]] = [
+    ("2015-01-01", "2017-01-01"),
     ("2017-01-01", "2017-12-31"),
     ("2017-01-01", "2018-12-31"),
+    ("2020-01-01", "2021-12-31"),
     ("2019-01-01", "2020-12-31"),
     ("2020-03-01", "2021-03-31"),
     ("2021-01-01", "2022-12-31"),
@@ -66,7 +109,7 @@ def run_period(
     backtest = MonthlyInjectionBacktest(initial_usd=initial_usd)
     result = backtest.run(df, params, deposits)
 
-    dca_btc = simple_dca(df, deposits, initial_usd)
+    dca_btc, dca_dd, dca_time_loss, dca_sharpe = dca_metrics(df, deposits, initial_usd)
     final_price = result["final_price"]
     dca_usd = dca_btc * final_price
 
@@ -81,6 +124,9 @@ def run_period(
         "usd_final": result["final_usd"],
         "retorno_btc_pct": result["btc_return"],
         "retorno_usd_pct": result["usd_return"],
+        "max_drawdown": result["max_drawdown"],
+        "tiempo_en_perdida_pct": result["time_in_loss_pct"],
+        "sharpe_ratio": result["sharpe_ratio"],
         "señales_disparadas": result.get(
             "signals_triggered", len(result.get("trades", []))
         ),
@@ -102,6 +148,9 @@ def run_period(
         "usd_final": dca_usd,
         "retorno_btc_pct": dca_ret_btc,
         "retorno_usd_pct": dca_ret_usd,
+        "max_drawdown": dca_dd,
+        "tiempo_en_perdida_pct": dca_time_loss,
+        "sharpe_ratio": dca_sharpe,
         "señales_disparadas": 0,
         "fecha_ultima_compra": df[df["Fecha"].dt.day == 1].iloc[-1]["Fecha"],
     }
@@ -118,6 +167,9 @@ def run_period(
         "ventaja_pct_vs_dca": (
             ((result["final_usd"] / dca_usd) - 1) * 100 if dca_usd > 0 else 0
         ),
+        "max_drawdown": result["max_drawdown"],
+        "tiempo_en_perdida_pct": result["time_in_loss_pct"],
+        "sharpe_ratio": result["sharpe_ratio"],
         "señales_disparadas": strat_row["señales_disparadas"],
         "fecha_ultima_compra": strat_row["fecha_ultima_compra"],
     }
@@ -134,6 +186,57 @@ def parse_periods(args_periods: List[str] | None) -> List[Tuple[str, str]]:
     return [
         (args_periods[i], args_periods[i + 1]) for i in range(0, len(args_periods), 2)
     ]
+
+
+def sensitivity_analysis(
+    periods: List[Tuple[str, str]],
+    deposits: List[float],
+    initial_usd: float,
+    base_params: Dict[str, Any],
+) -> pd.DataFrame:
+    """Evaluate different parameter combinations."""
+
+    results = []
+    for rsi in [25, 30, 35]:
+        for boll in [0.05, 0.08, 0.10]:
+            params = base_params.copy()
+            params["rsi_oversold"] = rsi
+            params["bollinger_oversold"] = boll
+            rows: List[Dict[str, Any]] = []
+            for start, end in periods:
+                rows.extend(run_period(start, end, deposits, params, initial_usd))
+            df = pd.DataFrame(rows)
+            resumen = df[df["tipo"] == "resumen"]
+            results.append(
+                {
+                    "rsi": rsi,
+                    "bollinger": boll,
+                    "ventaja_vs_dca": resumen["ventaja_pct_vs_dca"].mean(),
+                    "retorno_promedio": resumen["retorno_usd_pct"].mean(),
+                }
+            )
+    table = pd.DataFrame(results)
+    print("\n--- Sensibilidad parámetros ---")
+    print(table.to_string(index=False))
+    return table
+
+
+def plot_comparison(table: pd.DataFrame, path: Path | None = None) -> None:
+    """Save a bar plot comparing strategy vs DCA for each period."""
+
+    pivot = table.pivot(index="periodo", columns="tipo", values="retorno_usd_pct")
+    pivot = pivot.sort_index()
+    pivot.plot(kind="bar", figsize=(10, 6))
+    plt.ylabel("Retorno USD %")
+    plt.title("Estrategia vs DCA por periodo")
+    plt.grid(True, axis="y", linestyle=":")
+    plt.tight_layout()
+    if path is not None:
+        os.makedirs(path.parent, exist_ok=True)
+        plt.savefig(path, dpi=300, bbox_inches="tight")
+    else:
+        plt.show()
+    plt.close()
 
 
 def main() -> None:
@@ -156,6 +259,12 @@ def main() -> None:
         ),
     )
     parser.add_argument("--initial-usd", type=float, default=0.0)
+    parser.add_argument(
+        "--sensitivity", action="store_true", help="Analizar impacto de parametros"
+    )
+    parser.add_argument(
+        "--plot", action="store_true", help="Mostrar grafico de retornos"
+    )
     parser.add_argument(
         "--csv",
         type=str,
@@ -186,6 +295,18 @@ def main() -> None:
         rows.extend(run_period(start, end, args.monthly, params, args.initial_usd))
 
     table = pd.DataFrame(rows)
+
+    if args.sensitivity:
+        sens_table = sensitivity_analysis(
+            periods, args.monthly, args.initial_usd, params
+        )
+        if args.csv is None:
+            timestamp = pd.Timestamp.utcnow().strftime("%Y%m%d_%H%M%S")
+            args.csv = f"sensitivity_{timestamp}.csv"
+        csv_path = Path("results") / args.csv
+        os.makedirs(csv_path.parent, exist_ok=True)
+        sens_table.to_csv(csv_path, index=False)
+
     if not table.empty:
         print(table.to_string(index=False))
 
@@ -212,10 +333,17 @@ def main() -> None:
 
         if args.csv:
             csv_path = Path("results") / args.csv
-            os.makedirs(csv_path.parent, exist_ok=True)
-            table.to_csv(csv_path, index=False)
+        else:
+            timestamp = pd.Timestamp.utcnow().strftime("%Y%m%d_%H%M%S")
+            csv_path = Path("results") / f"multi_period_{timestamp}.csv"
+        os.makedirs(csv_path.parent, exist_ok=True)
+        table.to_csv(csv_path, index=False)
         if args.json:
             table.to_json(args.json, orient="records", indent=2)
+
+        if args.plot:
+            plot_path = Path("results") / "multi_period_plot.png"
+            plot_comparison(table, plot_path)
 
 
 if __name__ == "__main__":
