@@ -85,6 +85,18 @@ class MonthlyInjectionBacktest(BTCAccumulationBacktest):
             equity_curve["total_equity"] - equity_curve["peak"]
         ) / equity_curve["peak"]
         max_drawdown = equity_curve["drawdown"].min() * 100
+        time_in_loss = (equity_curve["drawdown"] < 0).mean() * 100
+        monthly_returns = (
+            equity_curve.resample("M", on="date")["total_equity"]
+            .last()
+            .pct_change()
+            .dropna()
+        )
+        sharpe_ratio = (
+            (monthly_returns.mean() / monthly_returns.std()) * (12**0.5)
+            if not monthly_returns.empty
+            else 0.0
+        )
         return {
             "initial_usd": self.initial_usd,
             "final_usd": total_equity,
@@ -92,6 +104,8 @@ class MonthlyInjectionBacktest(BTCAccumulationBacktest):
             "usd_return": usd_return,
             "btc_return": btc_return,
             "max_drawdown": abs(max_drawdown),
+            "time_in_loss_pct": time_in_loss,
+            "sharpe_ratio": sharpe_ratio,
             "trades": self.trades,
             "last_purchase": self.trades[-1]["date"] if self.trades else None,
             "signals_triggered": len(self.trades),
