@@ -38,8 +38,18 @@ def run_period(
     start_dt = pd.to_datetime(start)
     end_dt = pd.to_datetime(end)
     df = df_all[(df_all["Fecha"] >= start_dt) & (df_all["Fecha"] <= end_dt)]
+
     if df.empty:
-        raise ValueError("No hay datos para el periodo solicitado")
+        return {
+            "periodo": f"{start} - {end}",
+            "ciclo": "sin datos",
+            "btc_estrategia": 0.0,
+            "btc_dca": 0.0,
+            "usd_estrategia": 0.0,
+            "usd_dca": 0.0,
+            "diferencia_pct": 0.0,
+            "señales_disparadas": 0,
+        }
 
     backtest = MonthlyInjectionBacktest(initial_usd=0)
     result = backtest.run(df, params, deposits)
@@ -57,6 +67,9 @@ def run_period(
         "usd_dca": dca_usd,
         "diferencia_pct": (
             ((result["btc_accumulated"] / dca_btc) - 1) * 100 if dca_btc > 0 else 0
+        ),
+        "señales_disparadas": result.get(
+            "signals_triggered", len(result.get("trades", []))
         ),
     }
 
@@ -118,10 +131,7 @@ def main() -> None:
 
     rows = []
     for start, end in periods:
-        try:
-            rows.append(run_period(start, end, args.monthly, params))
-        except ValueError as exc:
-            print(f"Periodo {start}-{end} sin datos: {exc}")
+        rows.append(run_period(start, end, args.monthly, params))
 
     table = pd.DataFrame(rows)
     if not table.empty:

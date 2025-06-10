@@ -67,9 +67,17 @@ class MonthlyInjectionBacktest(BTCAccumulationBacktest):
             )
         final_price = df.iloc[-1]["Precio USD"]
         total_equity = self.usd_balance + (self.btc_balance * final_price)
-        usd_return = ((total_equity / self.initial_usd) - 1) * 100
+
+        if self.initial_usd > 0:
+            usd_return = ((total_equity / self.initial_usd) - 1) * 100
+        else:
+            usd_return = 0
+
         btc_start = self.initial_usd / df.iloc[0]["Precio USD"]
-        btc_return = ((self.btc_balance / btc_start) - 1) * 100
+        if btc_start > 0:
+            btc_return = ((self.btc_balance / btc_start) - 1) * 100
+        else:
+            btc_return = 0
         equity_curve = pd.DataFrame(self.equity_curve)
         equity_curve["peak"] = equity_curve["total_equity"].cummax()
         equity_curve["drawdown"] = (
@@ -84,6 +92,7 @@ class MonthlyInjectionBacktest(BTCAccumulationBacktest):
             "btc_return": btc_return,
             "max_drawdown": abs(max_drawdown),
             "trades": self.trades,
+            "signals_triggered": len(self.trades),
             "equity_curve": equity_curve,
             "final_price": final_price,
         }
