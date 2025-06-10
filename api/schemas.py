@@ -1,6 +1,8 @@
 from datetime import date
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
+
+ALLOWED_COINS = {"bitcoin", "ethereum", "solana"}
 
 
 class PriceOut(BaseModel):
@@ -32,6 +34,25 @@ class PortfolioItem(BaseModel):
     coin_id: str
     amount: float
     buy_date: date
+
+    @validator("coin_id")
+    def validate_coin_id(cls, v: str) -> str:
+        if v not in ALLOWED_COINS:
+            allowed = ", ".join(sorted(ALLOWED_COINS))
+            raise ValueError(f"coin_id must be one of: {allowed}")
+        return v
+
+    @validator("buy_date")
+    def validate_buy_date(cls, v: date) -> date:
+        if v >= date.today():
+            raise ValueError("buy_date must be in the past")
+        return v
+
+    @validator("amount")
+    def validate_amount(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("amount must be greater than 0")
+        return v
 
 
 class PortfolioEvalRequest(BaseModel):
