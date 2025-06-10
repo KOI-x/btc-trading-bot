@@ -31,8 +31,12 @@ DEFAULT_PERIODS: List[Tuple[str, str]] = [
 
 
 def run_period(
-    start: str, end: str, deposits: List[float], params: Dict[str, Any]
-) -> Dict[str, Any]:
+    start: str,
+    end: str,
+    deposits: List[float],
+    params: Dict[str, Any],
+    initial_usd: float,
+) -> List[Dict[str, Any]]:
     """Execute the strategy and DCA baseline for a single period."""
     df_all = load_historical_data()
     start_dt = pd.to_datetime(start)
@@ -40,38 +44,85 @@ def run_period(
     df = df_all[(df_all["Fecha"] >= start_dt) & (df_all["Fecha"] <= end_dt)]
 
     if df.empty:
-        return {
+        empty_row = {
             "periodo": f"{start} - {end}",
             "ciclo": "sin datos",
-            "btc_estrategia": 0.0,
-            "btc_dca": 0.0,
-            "usd_estrategia": 0.0,
-            "usd_dca": 0.0,
-            "diferencia_pct": 0.0,
+            "usd_invertido": 0.0,
+            "btc_final": 0.0,
+            "usd_final": 0.0,
+            "retorno_btc_pct": 0.0,
+            "retorno_usd_pct": 0.0,
             "señales_disparadas": 0,
+            "fecha_ultima_compra": None,
         }
+        base = empty_row.copy()
+        base.update({"tipo": "estrategia"})
+        dca = empty_row.copy()
+        dca.update({"tipo": "dca"})
+        resumen = empty_row.copy()
+        resumen.update({"tipo": "resumen", "ventaja_pct_vs_dca": 0.0})
+        return [base, dca, resumen]
 
-    backtest = MonthlyInjectionBacktest(initial_usd=0)
+    backtest = MonthlyInjectionBacktest(initial_usd=initial_usd)
     result = backtest.run(df, params, deposits)
 
-    dca_btc = simple_dca(df, deposits)
+    dca_btc = simple_dca(df, deposits, initial_usd)
     final_price = result["final_price"]
     dca_usd = dca_btc * final_price
 
-    return {
+    cycle = classify_cycle(df.iloc[0]["Precio USD"], final_price)
+    invested = result["total_invested"]
+    strat_row = {
         "periodo": f"{start} - {end}",
-        "ciclo": classify_cycle(df.iloc[0]["Precio USD"], final_price),
-        "btc_estrategia": result["btc_accumulated"],
-        "btc_dca": dca_btc,
-        "usd_estrategia": result["final_usd"],
-        "usd_dca": dca_usd,
-        "diferencia_pct": (
-            ((result["btc_accumulated"] / dca_btc) - 1) * 100 if dca_btc > 0 else 0
-        ),
+        "ciclo": cycle,
+        "tipo": "estrategia",
+        "usd_invertido": invested,
+        "btc_final": result["btc_accumulated"],
+        "usd_final": result["final_usd"],
+        "retorno_btc_pct": result["btc_return"],
+        "retorno_usd_pct": result["usd_return"],
         "señales_disparadas": result.get(
             "signals_triggered", len(result.get("trades", []))
         ),
+        "fecha_ultima_compra": result.get("last_purchase"),
     }
+
+    dca_ret_btc = (
+        ((dca_btc / (invested / df.iloc[0]["Precio USD"])) - 1) * 100
+        if invested > 0
+        else 0
+    )
+    dca_ret_usd = ((dca_usd / invested) - 1) * 100 if invested > 0 else 0
+    dca_row = {
+        "periodo": f"{start} - {end}",
+        "ciclo": cycle,
+        "tipo": "dca",
+        "usd_invertido": invested,
+        "btc_final": dca_btc,
+        "usd_final": dca_usd,
+        "retorno_btc_pct": dca_ret_btc,
+        "retorno_usd_pct": dca_ret_usd,
+        "señales_disparadas": 0,
+        "fecha_ultima_compra": df[df["Fecha"].dt.day == 1].iloc[-1]["Fecha"],
+    }
+
+    resumen = {
+        "periodo": f"{start} - {end}",
+        "ciclo": cycle,
+        "tipo": "resumen",
+        "usd_invertido": invested,
+        "btc_final": result["btc_accumulated"],
+        "usd_final": result["final_usd"],
+        "retorno_btc_pct": result["btc_return"],
+        "retorno_usd_pct": result["usd_return"],
+        "ventaja_pct_vs_dca": ((result["btc_accumulated"] / dca_btc) - 1) * 100
+        if dca_btc > 0
+        else 0,
+        "señales_disparadas": strat_row["señales_disparadas"],
+        "fecha_ultima_compra": strat_row["fecha_ultima_compra"],
+    }
+
+    return [strat_row, dca_row, resumen]
 
 
 def parse_periods(args_periods: List[str] | None) -> List[Tuple[str, str]]:
@@ -104,6 +155,7 @@ def main() -> None:
             "Si se omite se usan periodos por defecto"
         ),
     )
+    parser.add_argument("--initial-usd", type=float, default=0.0)
     parser.add_argument(
         "--csv",
         type=str,
@@ -129,9 +181,9 @@ def main() -> None:
         "trend_filter": False,
     }
 
-    rows = []
+    rows: List[Dict[str, Any]] = []
     for start, end in periods:
-        rows.append(run_period(start, end, args.monthly, params))
+        rows.extend(run_period(start, end, args.monthly, params, args.initial_usd))
 
     table = pd.DataFrame(rows)
     if not table.empty:
