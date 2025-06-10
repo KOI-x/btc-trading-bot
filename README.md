@@ -93,7 +93,13 @@ Estrategia de acumulación de Bitcoin que utiliza indicadores técnicos para ide
   python backtests/run_grid.py
   python backtests/ema_s2f_backtest.py
   ```
-- Los resultados se guardan en `results/` y los gráficos como `equity.png` pueden consultarse para interpretar el rendimiento.
+- Para comparar la estrategia con un DCA en distintos ciclos ejecuta:
+  ```bash
+  python -m backtests.multi_period_backtest_runner --csv resultados.csv
+  ```
+  El CSV generado en `results/` incluye columnas como `tipo`, `señales_disparadas`, `fecha_ultima_compra` y `ventaja_pct_vs_dca`.
+- Los gráficos de cada backtest se guardan en `results/` y pueden consultarse para interpretar el rendimiento.
+- Consulta `docs/monthly_backtest_guide.md` para una explicación detallada de cada campo y opciones adicionales.
 
 ## API REST y Frontend
 

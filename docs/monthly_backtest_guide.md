@@ -57,3 +57,18 @@ El archivo se guardará automáticamente en la carpeta `results/` como
 `results/resultados.csv`.
 
 Si no indicas periodos, se probarán cinco rangos predefinidos que cubren distintos ciclos de mercado. Puedes personalizar los periodos pasando pares de fechas (`inicio fin`) al argumento `--periods`.
+
+### Columnas del CSV
+
+Cada periodo genera tres filas: una para la estrategia, otra para el DCA de referencia y una fila de `resumen` que compara ambas. Las columnas son:
+
+- `periodo` y `ciclo`: rango analizado y tipo de mercado.
+- `tipo`: `estrategia`, `dca` o `resumen`.
+- `usd_invertido`: capital acumulado invertido hasta ese periodo.
+- `btc_final` y `usd_final`: saldos obtenidos al final.
+- `retorno_btc_pct` y `retorno_usd_pct`: rendimiento porcentual respecto al capital invertido.
+- `señales_disparadas`: cantidad de compras ejecutadas por la estrategia.
+- `fecha_ultima_compra`: última fecha en que se realizó una operación.
+- `ventaja_pct_vs_dca`: diferencia de rendimiento en USD de la estrategia contra el DCA.
+
+Al final del reporte se imprime un **Resumen global** con promedios de retornos, porcentaje de ciclos donde la estrategia supera al DCA y el total de señales disparadas.
