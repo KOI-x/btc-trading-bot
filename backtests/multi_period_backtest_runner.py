@@ -115,9 +115,9 @@ def run_period(
         "usd_final": result["final_usd"],
         "retorno_btc_pct": result["btc_return"],
         "retorno_usd_pct": result["usd_return"],
-        "ventaja_pct_vs_dca": ((result["btc_accumulated"] / dca_btc) - 1) * 100
-        if dca_btc > 0
-        else 0,
+        "ventaja_pct_vs_dca": (
+            ((result["btc_accumulated"] / dca_btc) - 1) * 100 if dca_btc > 0 else 0
+        ),
         "señales_disparadas": strat_row["señales_disparadas"],
         "fecha_ultima_compra": strat_row["fecha_ultima_compra"],
     }
