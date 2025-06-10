@@ -116,7 +116,7 @@ def run_period(
         "retorno_btc_pct": result["btc_return"],
         "retorno_usd_pct": result["usd_return"],
         "ventaja_pct_vs_dca": (
-            ((result["btc_accumulated"] / dca_btc) - 1) * 100 if dca_btc > 0 else 0
+            ((result["final_usd"] / dca_usd) - 1) * 100 if dca_usd > 0 else 0
         ),
         "señales_disparadas": strat_row["señales_disparadas"],
         "fecha_ultima_compra": strat_row["fecha_ultima_compra"],
@@ -188,6 +188,28 @@ def main() -> None:
     table = pd.DataFrame(rows)
     if not table.empty:
         print(table.to_string(index=False))
+
+        strat_rows = table[table["tipo"] == "estrategia"]
+        dca_rows = table[table["tipo"] == "dca"]
+        resumen_rows = table[table["tipo"] == "resumen"]
+
+        mean_usd_strat = strat_rows["retorno_usd_pct"].mean()
+        mean_usd_dca = dca_rows["retorno_usd_pct"].mean()
+        mean_btc_strat = strat_rows["retorno_btc_pct"].mean()
+        win_pct = (
+            (resumen_rows["ventaja_pct_vs_dca"] > 0).sum() / len(resumen_rows) * 100
+            if not resumen_rows.empty
+            else 0
+        )
+        total_signals = int(strat_rows["señales_disparadas"].sum())
+
+        print("\n--- Resumen global ---")
+        print(f"Promedio retorno USD estrategia: {mean_usd_strat:.2f}%")
+        print(f"Promedio retorno USD DCA: {mean_usd_dca:.2f}%")
+        print(f"Promedio retorno BTC estrategia: {mean_btc_strat:.2f}%")
+        print(f"Porcentaje de ciclos con ventaja: {win_pct:.1f}%")
+        print(f"Total de señales disparadas: {total_signals}")
+
         if args.csv:
             csv_path = Path("results") / args.csv
             os.makedirs(csv_path.parent, exist_ok=True)
