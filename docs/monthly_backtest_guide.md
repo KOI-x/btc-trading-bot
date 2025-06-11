@@ -65,6 +65,7 @@ Para explorar la sensibilidad de la estrategia también puedes ejecutar con `--s
 Cada periodo genera tres filas: una para la estrategia, otra para el DCA de referencia y una fila de `resumen` que compara ambas. Las columnas son:
 
 - `periodo` y `ciclo`: rango analizado y tipo de mercado.
+- `entorno`: tendencia general calculada con la SMA200 (`bull`, `bear` o `neutral`).
 - `tipo`: `estrategia`, `dca` o `resumen`.
 - `usd_invertido`: capital acumulado invertido hasta ese periodo.
 - `btc_final` y `usd_final`: saldos obtenidos al final.
@@ -77,3 +78,35 @@ Cada periodo genera tres filas: una para la estrategia, otra para el DCA de refe
 - `ventaja_pct_vs_dca`: diferencia de rendimiento en USD de la estrategia contra el DCA.
 
 Al final del reporte se imprime un **Resumen global** con promedios de retornos, porcentaje de ciclos donde la estrategia supera al DCA y el total de señales disparadas.
+
+## Estrategia híbrida con filtro de tendencia
+
+El runner `backtests.hybrid_trend_backtest_runner` implementa una variante experimental
+que ajusta el monto de compra mensual según la relación del precio con la SMA50,
+mientras que solo realiza compras si el precio se mantiene sobre la SMA200
+(entorno alcista) y el RSI está por debajo de un umbral (por defecto 45).
+
+Parámetros principales:
+
+- `--base-monthly`: aporte base en USD para meses alcistas.
+- `--factor`: multiplicador para el spread dinámico `(precio/SMA50 - 1)`.
+- `--rsi-threshold`: nivel máximo de RSI para habilitar la compra.
+- `--bear-monthly` y `--neutral-monthly`: montos fijos a invertir en entornos
+  bajistas o laterales (pueden ser 0 para desactivar compras).
+
+Ejemplo de ejecución:
+
+```bash
+python -m backtests.hybrid_trend_backtest_runner \
+    --start 2020-01-01 --end 2022-12-31 \
+    --base-monthly 100 --factor 50 --csv hibrido.csv
+```
+
+### Columnas adicionales
+
+El CSV generado incluye, además de las columnas habituales, las siguientes:
+
+- `tendencia_activa`: `true` si la SMA200 se considera alcista durante el periodo.
+- `modo_estrategia`: identifica si la fila corresponde a la estrategia
+  adaptativa, la estrategia base o el DCA fijo.
+- `btc_final`: BTC acumulados al cierre del periodo para cada modo.

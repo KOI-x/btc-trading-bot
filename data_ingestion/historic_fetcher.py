@@ -14,11 +14,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session as DBSession
 
 from config import DATABASE_URL
-from storage.database import (
-    PriceHistory,
-    init_db,
-    init_engine,
-)
+from storage.database import PriceHistory, init_db, init_engine
 
 # Configurar logging
 logging.basicConfig(

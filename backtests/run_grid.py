@@ -21,7 +21,7 @@ def load_data(coin_id: str) -> pd.DataFrame:
 
 def run_backtest(module_name: str, coin_id: str, **params) -> tuple[float, float]:
     module = importlib.import_module(module_name)
-    strategy = getattr(module, "evaluar_estrategia")
+    strategy = module.evaluar_estrategia
 
     df = load_data(coin_id)
     capital = 10000.0
@@ -51,7 +51,9 @@ def run_backtest(module_name: str, coin_id: str, **params) -> tuple[float, float
 
     equity_series = pd.Series(equity_curve)
     returns = equity_series.pct_change().dropna()
-    sharpe = (returns.mean() / returns.std()) * (252**0.5) if not returns.empty else 0.0
+    sharpe = (
+        (returns.mean() / returns.std()) * (252**0.5) if not returns.empty else 0.0
+    )
     return capital, sharpe
 
 

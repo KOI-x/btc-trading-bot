@@ -191,7 +191,6 @@ def evaluar_estrategia_avanzada(
             s2f_ratio = calculate_s2f_ratio(params["block_height"])
             price_s2f_model = 0.4 * (s2f_ratio**3)
             s2f_deviation = (current_price - price_s2f_model) / price_s2f_model
-            s2f_deviation < params["s2f_threshold"]
 
         signal = "HOLD"
 
