@@ -48,7 +48,8 @@ def detect_environment(df: pd.DataFrame, threshold: float = 0.05) -> str:
 def run_strategy(
     df: pd.DataFrame,
     base: float,
-    factor: float,
+    factor_bull: float,
+    factor_bear: float,
     fixed: float,
     rsi_thr: float,
     env_thr: float,
@@ -67,8 +68,11 @@ def run_strategy(
             sma50 = history["SMA50"].iloc[-1]
             rsi45 = history["RSI_45"].iloc[-1]
             if env == "bull":
-                adaptive = base + (row["Precio USD"] / sma50 - 1) * factor
-                amount = adaptive if rsi45 >= rsi_thr else base
+                adaptive = base + (row["Precio USD"] / sma50 - 1) * factor_bull
+                amount = adaptive if (rsi_thr <= 0 or rsi45 >= rsi_thr) else base
+            elif env == "bear":
+                adaptive = base + (row["Precio USD"] / sma50 - 1) * factor_bear
+                amount = adaptive if (rsi_thr <= 0 or rsi45 >= rsi_thr) else base
             else:
                 amount = fixed
             if amount > 0:
@@ -149,19 +153,30 @@ def main() -> None:
     )
     parser.add_argument("--base", type=float, default=100.0, help="Aporte base mensual")
     parser.add_argument(
-        "--factor",
+        "--factor-bull",
+        dest="factor_bull",
         type=float,
         default=200.0,
-        help="Factor de ajuste para la compra adaptativa",
+        help="Factor de ajuste en entorno bull",
     )
     parser.add_argument(
-        "--fixed", type=float, default=50.0, help="Aporte en mercados neutro o bajista"
+        "--factor-bear",
+        dest="factor_bear",
+        type=float,
+        default=200.0,
+        help="Factor de ajuste en entorno bear",
+    )
+    parser.add_argument(
+        "--fixed",
+        type=float,
+        default=50.0,
+        help="Aporte en entornos neutrales",
     )
     parser.add_argument(
         "--rsi-threshold",
         type=float,
         default=55.0,
-        help="Umbral de RSI(45) para habilitar la compra adaptativa",
+        help="Umbral de RSI(45) para habilitar la compra adaptativa (0 desactiva)",
     )
     parser.add_argument(
         "--env-threshold",
@@ -183,9 +198,21 @@ def main() -> None:
     df = df.dropna().reset_index(drop=True)
 
     strat = run_strategy(
-        df, args.base, args.factor, args.fixed, args.rsi_threshold, args.env_threshold
+        df,
+        args.base,
+        args.factor_bull,
+        args.factor_bear,
+        args.fixed,
+        args.rsi_threshold,
+        args.env_threshold,
     )
     dca = run_dca(df, args.base)
+
+    advantage = (
+        ((strat["btc_final"] / dca["btc_final"]) - 1) * 100
+        if dca["btc_final"] > 0
+        else 0.0
+    )
 
     rows = [
         {
@@ -197,6 +224,7 @@ def main() -> None:
             "retorno_usd_pct": strat["usd_return_pct"],
             "max_drawdown": strat["max_drawdown"],
             "sharpe_ratio": strat["sharpe_ratio"],
+            "ventaja_btc_pct": advantage,
         },
         {
             "entorno": strat["entorno"],
@@ -207,6 +235,7 @@ def main() -> None:
             "retorno_usd_pct": dca["usd_return_pct"],
             "max_drawdown": dca["max_drawdown"],
             "sharpe_ratio": dca["sharpe_ratio"],
+            "ventaja_btc_pct": 0.0,
         },
     ]
 

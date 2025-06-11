@@ -82,23 +82,24 @@ Al final del reporte se imprime un **Resumen global** con promedios de retornos,
 
 El archivo `backtests/hybrid_trend_backtest_runner.py` permite evaluar compras
 mensuales ajustadas al entorno de mercado utilizando la SMA200. Cada mes se
-clasifica el mercado como **bull**, **bear** o **neutral** y, si es alcista, se
-calcula un aporte dinámico:
+clasifica el mercado como **bull**, **bear** o **neutral** y, si es alcista o
+bajista, se calcula un aporte dinámico:
 
 ```
 aporte = base + (precio_actual / SMA50 - 1) * factor_ajuste
 ```
 
 La compra adaptativa solo se ejecuta si el RSI de 45 periodos supera el umbral
-definido por `--rsi-threshold`. En entornos bajistas o neutros se aplica el
-monto indicado en `--fixed`.
+definido por `--rsi-threshold` (si se indica `0` se desactiva el filtro). En
+entorno neutral se aplica el monto indicado en `--fixed`.
 
 ### Parámetros adicionales
 
-- `--base`: aporte base en USD para meses alcistas.
-- `--factor`: multiplicador para el ajuste sobre la SMA50.
-- `--fixed`: monto a invertir en entornos bajistas o laterales.
-- `--rsi-threshold`: nivel mínimo del RSI(45) para activar la compra adaptativa.
+- `--base`: aporte base común para bull y bear.
+- `--factor-bull`: multiplicador aplicado en entornos alcistas.
+- `--factor-bear`: multiplicador aplicado en entornos bajistas.
+- `--fixed`: monto a invertir en entornos neutrales.
+- `--rsi-threshold`: nivel mínimo del RSI(45) para activar la compra adaptativa (0 lo desactiva).
 - `--env-threshold`: margen sobre la SMA200 que define bull o bear.
 
 ### Columnas extra del CSV
@@ -107,11 +108,12 @@ monto indicado en `--fixed`.
 - `tendencia`: cruce final de SMA50 y SMA200.
 - `modo_estrategia`: `adaptativa` o `dca`.
 - `btc_final`: cantidad de BTC acumulados.
+- `ventaja_btc_pct`: diferencia porcentual de BTC frente a un DCA.
 
 ### Ejemplo
 
 ```bash
 python -m backtests.hybrid_trend_backtest_runner \
-    --base 100 --factor 200 --fixed 50 \
+    --base 100 --factor-bull 200 --factor-bear 150 --fixed 50 \
     --start-date 2018-01-01 --end-date 2021-12-31
 ```

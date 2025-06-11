@@ -45,7 +45,7 @@ def save_evaluation(
 
 
 @router.get("/api/prices/{coin_id}", response_model=list[PriceOut])
-def get_prices(coin_id: str, db: Session = Depends(get_db)):
+def get_prices(coin_id: str, db: Session = Depends(get_db)):  # noqa: B008
     query = db.query(Price).filter(Price.coin_id == coin_id)
     prices = query.order_by(Price.date).all()
     if not prices:
