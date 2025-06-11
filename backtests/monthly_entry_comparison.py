@@ -53,6 +53,22 @@ def classify_cycle(start_price: float, end_price: float) -> str:
     return "lateral"
 
 
+def detect_environment(df: pd.DataFrame) -> str:
+    """Classify market environment using a 200-day SMA."""
+    df = df.copy()
+    df["SMA200"] = df["Precio USD"].rolling(window=200).mean()
+    df = df.dropna(subset=["SMA200"])
+    if df.empty:
+        return "neutral"
+    above = (df["Precio USD"] > df["SMA200"]).mean()
+    below = (df["Precio USD"] < df["SMA200"]).mean()
+    if above > 0.6:
+        return "bull"
+    if below > 0.6:
+        return "bear"
+    return "neutral"
+
+
 def evaluate_period(
     start: str,
     months: int,
@@ -70,9 +86,11 @@ def evaluate_period(
     result = backtest.run(df, params, deposits)
     dca_btc = simple_dca(df, deposits, initial_usd)
     final_price = result["final_price"]
+    env = detect_environment(df)
     return {
         "periodo": start_dt.strftime("%Y-%m"),
         "ciclo": classify_cycle(df.iloc[0]["Precio USD"], final_price),
+        "entorno": env,
         "btc_estrategia": result["btc_accumulated"],
         "btc_dca": dca_btc,
         "diferencia_pct": (

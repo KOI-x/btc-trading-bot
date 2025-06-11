@@ -65,6 +65,7 @@ Para explorar la sensibilidad de la estrategia también puedes ejecutar con `--s
 Cada periodo genera tres filas: una para la estrategia, otra para el DCA de referencia y una fila de `resumen` que compara ambas. Las columnas son:
 
 - `periodo` y `ciclo`: rango analizado y tipo de mercado.
+- `entorno`: tendencia general calculada con la SMA200 (`bull`, `bear` o `neutral`).
 - `tipo`: `estrategia`, `dca` o `resumen`.
 - `usd_invertido`: capital acumulado invertido hasta ese periodo.
 - `btc_final` y `usd_final`: saldos obtenidos al final.

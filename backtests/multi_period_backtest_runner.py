@@ -14,7 +14,7 @@ import pandas as pd
 # Add backtests directory to path so we can import sibling modules
 sys.path.append(str(Path(__file__).parent))  # noqa: E402
 
-from monthly_entry_comparison import classify_cycle  # noqa: E402
+from monthly_entry_comparison import classify_cycle, detect_environment  # noqa: E402
 from monthly_injection_runner import (  # noqa: E402
     MonthlyInjectionBacktest,
     load_historical_data,
@@ -114,10 +114,12 @@ def run_period(
     dca_usd = dca_btc * final_price
 
     cycle = classify_cycle(df.iloc[0]["Precio USD"], final_price)
+    env = detect_environment(df)
     invested = result["total_invested"]
     strat_row = {
         "periodo": f"{start} - {end}",
         "ciclo": cycle,
+        "entorno": env,
         "tipo": "estrategia",
         "usd_invertido": invested,
         "btc_final": result["btc_accumulated"],
@@ -142,6 +144,7 @@ def run_period(
     dca_row = {
         "periodo": f"{start} - {end}",
         "ciclo": cycle,
+        "entorno": env,
         "tipo": "dca",
         "usd_invertido": invested,
         "btc_final": dca_btc,
@@ -158,6 +161,7 @@ def run_period(
     resumen = {
         "periodo": f"{start} - {end}",
         "ciclo": cycle,
+        "entorno": env,
         "tipo": "resumen",
         "usd_invertido": invested,
         "btc_final": result["btc_accumulated"],
@@ -324,12 +328,18 @@ def main() -> None:
         )
         total_signals = int(strat_rows["señales_disparadas"].sum())
 
+        bull_rows = resumen_rows[resumen_rows["entorno"] == "bull"]
+        bull_adv = (
+            bull_rows["ventaja_pct_vs_dca"].mean() if not bull_rows.empty else 0.0
+        )
+
         print("\n--- Resumen global ---")
         print(f"Promedio retorno USD estrategia: {mean_usd_strat:.2f}%")
         print(f"Promedio retorno USD DCA: {mean_usd_dca:.2f}%")
         print(f"Promedio retorno BTC estrategia: {mean_btc_strat:.2f}%")
         print(f"Porcentaje de ciclos con ventaja: {win_pct:.1f}%")
         print(f"Total de señales disparadas: {total_signals}")
+        print(f"Ventaja en entornos alcistas: {bull_adv:.2f}%")
 
         if args.csv:
             csv_path = Path("results") / args.csv
