@@ -217,6 +217,12 @@ def main() -> None:
         action="store_true",
         help="Fusionar métricas on-chain de Glassnode",
     )
+    parser.add_argument(
+        "--onchain-csv",
+        type=str,
+        default=None,
+        help="Ruta opcional al CSV local con métricas on-chain",
+    )
     args = parser.parse_args()
 
     df = load_historical_data()
@@ -224,12 +230,19 @@ def main() -> None:
     end = pd.to_datetime(args.end_date) if args.end_date else pd.to_datetime("today")
     df = df[(df["Fecha"] >= start) & (df["Fecha"] <= end)]
     if args.use_onchain:
-        onchain = load_onchain_data(
-            os.getenv("EXCHANGE_NET_FLOW_CSV"),
-            os.getenv("SOPR_CSV"),
-            args.start_date,
-            args.end_date or end.strftime("%Y-%m-%d"),
-        ).rename(columns={"date": "Fecha"})
+        if args.onchain_csv:
+            onchain = (
+                pd.read_csv(args.onchain_csv)
+                .assign(date=lambda d: pd.to_datetime(d["date"]))
+                .rename(columns={"date": "Fecha"})
+            )
+        else:
+            onchain = load_onchain_data(
+                os.getenv("EXCHANGE_NET_FLOW_CSV"),
+                os.getenv("SOPR_CSV"),
+                args.start_date,
+                args.end_date or end.strftime("%Y-%m-%d"),
+            ).rename(columns={"date": "Fecha"})
         df = df.merge(onchain, on="Fecha", how="left")
     df = df.dropna().reset_index(drop=True)
 

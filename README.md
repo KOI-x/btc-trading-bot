@@ -109,8 +109,9 @@ Estrategia de acumulación de Bitcoin que utiliza indicadores técnicos para ide
   alcistas o bajistas, mientras que `--fixed` se usa cuando el mercado es neutral.
   El filtro de RSI se puede desactivar pasando `--rsi-threshold 0`.
   Con `--use-onchain` se añaden las métricas de Glassnode (`sopr` y
-  `exchange_net_flow`) para clasificar el entorno. Puedes indicar archivos
-  descargados con las variables `EXCHANGE_NET_FLOW_CSV` y `SOPR_CSV`.
+  `exchange_net_flow`) para clasificar el entorno. Puedes indicar un CSV
+  alternativo con `--onchain-csv ruta/al/archivo.csv` o usar las variables
+  `EXCHANGE_NET_FLOW_CSV` y `SOPR_CSV`.
 
 ## API REST y Frontend
 
