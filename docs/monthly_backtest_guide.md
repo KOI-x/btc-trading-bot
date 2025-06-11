@@ -101,6 +101,7 @@ entorno neutral se aplica el monto indicado en `--fixed`.
 - `--fixed`: monto a invertir en entornos neutrales.
 - `--rsi-threshold`: nivel mínimo del RSI(45) para activar la compra adaptativa (0 lo desactiva).
 - `--env-threshold`: margen sobre la SMA200 que define bull o bear.
+- `--use-onchain`: fusiona las métricas de Glassnode para detectar el entorno.
 
 ### Columnas extra del CSV
 
@@ -109,11 +110,15 @@ entorno neutral se aplica el monto indicado en `--fixed`.
 - `modo_estrategia`: `adaptativa` o `dca`.
 - `btc_final`: cantidad de BTC acumulados.
 - `ventaja_btc_pct`: diferencia porcentual de BTC frente a un DCA.
+- `sopr` y `exchange_net_flow`: métricas on-chain del último día (si se usa la bandera).
 
 ### Ejemplo
 
 ```bash
 python -m backtests.hybrid_trend_backtest_runner \
     --base 100 --factor-bull 200 --factor-bear 150 --fixed 50 \
-    --start-date 2018-01-01 --end-date 2021-12-31
+    --start-date 2018-01-01 --end-date 2021-12-31 \
+    --use-onchain
 ```
+Si no se cuenta con la clave de Glassnode, define `EXCHANGE_NET_FLOW_CSV` y
+`SOPR_CSV` con las rutas a los CSV descargados manualmente.
