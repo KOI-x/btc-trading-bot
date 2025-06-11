@@ -102,8 +102,12 @@ Estrategia de acumulación de Bitcoin que utiliza indicadores técnicos para ide
 - Los gráficos de cada backtest se guardan en `results/`; consulta `docs/monthly_backtest_guide.md` para más detalles y ejemplos.
 - Para analizar compras adaptativas según el entorno de mercado ejecuta:
   ```bash
-  python -m backtests.hybrid_trend_backtest_runner --base 100 --factor 200
+  python -m backtests.hybrid_trend_backtest_runner \
+      --base 100 --factor-bull 200 --factor-bear 150 --fixed 50
   ```
+  Donde `--factor-bull` y `--factor-bear` controlan el ajuste del aporte en entornos
+  alcistas o bajistas, mientras que `--fixed` se usa cuando el mercado es neutral.
+  El filtro de RSI se puede desactivar pasando `--rsi-threshold 0`.
 
 ## API REST y Frontend
 
