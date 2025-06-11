@@ -77,3 +77,41 @@ Cada periodo genera tres filas: una para la estrategia, otra para el DCA de refe
 - `ventaja_pct_vs_dca`: diferencia de rendimiento en USD de la estrategia contra el DCA.
 
 Al final del reporte se imprime un **Resumen global** con promedios de retornos, porcentaje de ciclos donde la estrategia supera al DCA y el total de señales disparadas.
+
+## Runner híbrido con detección de entornos
+
+El archivo `backtests/hybrid_trend_backtest_runner.py` permite evaluar compras
+mensuales ajustadas al entorno de mercado utilizando la SMA200. Cada mes se
+clasifica el mercado como **bull**, **bear** o **neutral** y, si es alcista, se
+calcula un aporte dinámico:
+
+```
+aporte = base + (precio_actual / SMA50 - 1) * factor_ajuste
+```
+
+La compra adaptativa solo se ejecuta si el RSI de 45 periodos supera el umbral
+definido por `--rsi-threshold`. En entornos bajistas o neutros se aplica el
+monto indicado en `--fixed`.
+
+### Parámetros adicionales
+
+- `--base`: aporte base en USD para meses alcistas.
+- `--factor`: multiplicador para el ajuste sobre la SMA50.
+- `--fixed`: monto a invertir en entornos bajistas o laterales.
+- `--rsi-threshold`: nivel mínimo del RSI(45) para activar la compra adaptativa.
+- `--env-threshold`: margen sobre la SMA200 que define bull o bear.
+
+### Columnas extra del CSV
+
+- `entorno`: estado del mercado al cierre del periodo.
+- `tendencia`: cruce final de SMA50 y SMA200.
+- `modo_estrategia`: `adaptativa` o `dca`.
+- `btc_final`: cantidad de BTC acumulados.
+
+### Ejemplo
+
+```bash
+python -m backtests.hybrid_trend_backtest_runner \
+    --base 100 --factor 200 --fixed 50 \
+    --start-date 2018-01-01 --end-date 2021-12-31
+```
