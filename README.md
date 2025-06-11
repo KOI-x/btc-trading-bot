@@ -100,6 +100,10 @@ Estrategia de acumulación de Bitcoin que utiliza indicadores técnicos para ide
   El CSV generado en `results/` incluye columnas de riesgo como `max_drawdown`, `tiempo_en_perdida_pct` y `sharpe_ratio`.
 - Usa `--sensitivity` para evaluar distintas combinaciones de RSI y Bollinger y `--plot` para guardar un gráfico comparativo.
 - Los gráficos de cada backtest se guardan en `results/`; consulta `docs/monthly_backtest_guide.md` para más detalles y ejemplos.
+- Para analizar compras adaptativas según el entorno de mercado ejecuta:
+  ```bash
+  python -m backtests.hybrid_trend_backtest_runner --base 100 --factor 200
+  ```
 
 ## API REST y Frontend
 
