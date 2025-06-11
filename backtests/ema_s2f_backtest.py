@@ -368,7 +368,6 @@ def backtest(
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(
         description="Backtest de estrategia de trading con margen"
     )
