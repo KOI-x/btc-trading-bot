@@ -9,6 +9,8 @@ from typing import Any, Dict
 
 import pandas as pd
 
+from data_ingestion.onchain_data_loader import load_onchain_data
+
 
 def compute_rsi(series: pd.Series, period: int) -> pd.Series:
     """Return RSI for the given period."""
@@ -34,13 +36,23 @@ def load_historical_data(
     return df
 
 
-def detect_environment(df: pd.DataFrame, threshold: float = 0.05) -> str:
-    """Classify market as bull, bear or neutral based on SMA200."""
+def detect_environment(
+    df: pd.DataFrame, threshold: float = 0.05, use_onchain: bool = False
+) -> str:
+    """Classify market as bull, bear or neutral."""
     price = df["Precio USD"].iloc[-1]
-    sma = df["SMA200"].iloc[-1]
-    if price > sma * (1 + threshold):
+    sma200 = df["SMA200"].iloc[-1]
+    if use_onchain:
+        sopr = df["sopr"].iloc[-1]
+        flow = df["exchange_net_flow"].iloc[-1]
+        if price < sma200 and sopr < 1:
+            return "bear"
+        if price > sma200 and flow < 0 and sopr > 1:
+            return "bull"
+        return "neutral"
+    if price > sma200 * (1 + threshold):
         return "bull"
-    if price < sma * (1 - threshold):
+    if price < sma200 * (1 - threshold):
         return "bear"
     return "neutral"
 
@@ -53,6 +65,7 @@ def run_strategy(
     fixed: float,
     rsi_thr: float,
     env_thr: float,
+    use_onchain: bool = False,
 ) -> Dict[str, Any]:
     """Execute adaptive monthly purchases based on market environment."""
     btc_balance = 0.0
@@ -64,14 +77,20 @@ def run_strategy(
             continue
         if row["Fecha"].day == 1:
             history = df.iloc[: i + 1]
-            env = detect_environment(history, env_thr)
+            env = detect_environment(history, env_thr, use_onchain)
             sma50 = history["SMA50"].iloc[-1]
             rsi45 = history["RSI_45"].iloc[-1]
             if env == "bull":
-                adaptive = base + (row["Precio USD"] / sma50 - 1) * factor_bull
+                factor = factor_bull
+                adaptive = base + (row["Precio USD"] / sma50 - 1) * factor
                 amount = adaptive if (rsi_thr <= 0 or rsi45 >= rsi_thr) else base
             elif env == "bear":
-                adaptive = base + (row["Precio USD"] / sma50 - 1) * factor_bear
+                factor = (
+                    factor_bear * (1 + max(0.0, 1 - history["sopr"].iloc[-1]))
+                    if use_onchain
+                    else factor_bear
+                )
+                adaptive = base + (row["Precio USD"] / sma50 - 1) * factor
                 amount = adaptive if (rsi_thr <= 0 or rsi45 >= rsi_thr) else base
             else:
                 amount = fixed
@@ -80,7 +99,7 @@ def run_strategy(
                 usd_invested += amount
         equity.append({"date": row["Fecha"], "equity": btc_balance * row["Precio USD"]})
 
-    final_env = detect_environment(df, env_thr)
+    final_env = detect_environment(df, env_thr, use_onchain)
     trend = "alcista" if df["SMA50"].iloc[-1] > df["SMA200"].iloc[-1] else "bajista"
     final_price = df.iloc[-1]["Precio USD"]
     final_usd = btc_balance * final_price
@@ -99,7 +118,7 @@ def run_strategy(
         if not monthly_returns.empty
         else 0.0
     )
-    return {
+    result = {
         "entorno": final_env,
         "tendencia": trend,
         "btc_final": btc_balance,
@@ -109,6 +128,10 @@ def run_strategy(
         "sharpe_ratio": sharpe,
         "total_invested": usd_invested,
     }
+    if use_onchain:
+        result["sopr"] = df["sopr"].iloc[-1]
+        result["exchange_net_flow"] = df["exchange_net_flow"].iloc[-1]
+    return result
 
 
 def run_dca(df: pd.DataFrame, base: float) -> Dict[str, Any]:
@@ -189,12 +212,25 @@ def main() -> None:
     parser.add_argument(
         "--csv", type=str, default=None, help="Nombre opcional para guardar CSV"
     )
+    parser.add_argument(
+        "--use-onchain",
+        action="store_true",
+        help="Fusionar métricas on-chain de Glassnode",
+    )
     args = parser.parse_args()
 
     df = load_historical_data()
     start = pd.to_datetime(args.start_date)
     end = pd.to_datetime(args.end_date) if args.end_date else pd.to_datetime("today")
     df = df[(df["Fecha"] >= start) & (df["Fecha"] <= end)]
+    if args.use_onchain:
+        onchain = load_onchain_data(
+            os.getenv("EXCHANGE_NET_FLOW_CSV"),
+            os.getenv("SOPR_CSV"),
+            args.start_date,
+            args.end_date or end.strftime("%Y-%m-%d"),
+        ).rename(columns={"date": "Fecha"})
+        df = df.merge(onchain, on="Fecha", how="left")
     df = df.dropna().reset_index(drop=True)
 
     strat = run_strategy(
@@ -205,6 +241,7 @@ def main() -> None:
         args.fixed,
         args.rsi_threshold,
         args.env_threshold,
+        args.use_onchain,
     )
     dca = run_dca(df, args.base)
 
@@ -238,6 +275,11 @@ def main() -> None:
             "ventaja_btc_pct": 0.0,
         },
     ]
+
+    if args.use_onchain:
+        for row in rows:
+            row["sopr"] = strat["sopr"]
+            row["exchange_net_flow"] = strat["exchange_net_flow"]
 
     results = pd.DataFrame(rows)
     os.makedirs("results", exist_ok=True)
