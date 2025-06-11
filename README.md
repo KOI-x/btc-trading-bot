@@ -101,6 +101,11 @@ Estrategia de acumulación de Bitcoin que utiliza indicadores técnicos para ide
   También se añade la columna `entorno` (bull/bear/neutral) calculada con la SMA200.
   - Usa `--sensitivity` para evaluar distintas combinaciones de RSI y Bollinger y `--plot` para guardar un gráfico comparativo.
   - Los gráficos de cada backtest se guardan en `results/`; consulta `docs/monthly_backtest_guide.md` para más detalles y ejemplos.
+- Para probar la estrategia adaptativa con filtro de tendencia ejecuta:
+  ```bash
+  python -m backtests.hybrid_trend_backtest_runner --csv adaptativo.csv
+  ```
+  Consulta la guía para parámetros y columnas adicionales.
 
 ## API REST y Frontend
 
