@@ -4,20 +4,21 @@ from __future__ import annotations
 
 import argparse
 import os
+
+# Add backtests directory to path so we can import sibling modules
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
 import pandas as pd
 
-# Add backtests directory to path so we can import sibling modules
-import sys
 sys.path.append(str(Path(__file__).parent))  # noqa: E402
 
 from monthly_entry_comparison import detect_environment  # noqa: E402
-from monthly_injection_runner import (
+from monthly_injection_runner import (  # noqa: E402
     MonthlyInjectionBacktest,
     load_historical_data,
-)  # noqa: E402
+)
 
 
 class HybridTrendBacktest:
@@ -133,9 +134,7 @@ def run_period(
     ventaja_hybrid = (
         ((hybrid_res["usd_final"] / dca_usd) - 1) * 100 if dca_usd > 0 else 0
     )
-    ventaja_base = (
-        ((base_res["final_usd"] / dca_usd) - 1) * 100 if dca_usd > 0 else 0
-    )
+    ventaja_base = ((base_res["final_usd"] / dca_usd) - 1) * 100 if dca_usd > 0 else 0
 
     rows = [
         {
